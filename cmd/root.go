@@ -66,20 +66,26 @@ func Execute() {
 		},
 	}
 
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
 	// options
 	rootCmd.PersistentFlags().BoolVarP(&ShowVersion, "version", "v", false, "Print program version")
 	rootCmd.PersistentFlags().BoolVarP(&conf.Debug, "debug", "d", false, "Enable debugging")
-	rootCmd.PersistentFlags().StringVarP(&conf.Dbfile, "dbfile", "f", filepath.Join(os.Getenv("HOME"), ".config", "anydb", "default.db"), "DB file to use")
+	rootCmd.PersistentFlags().StringVarP(&conf.Dbfile, "dbfile", "f",
+		filepath.Join(home, ".config", "anydb", "default.db"), "DB file to use")
 
 	rootCmd.AddCommand(Set(&conf))
+	rootCmd.AddCommand(List(&conf))
 	// rootCmd.AddCommand(Set(&conf))
 	// rootCmd.AddCommand(Del(&conf))
-	// rootCmd.AddCommand(List(&conf))
 	// rootCmd.AddCommand(Find(&conf))
 	// rootCmd.AddCommand(Help(&conf))
 	// rootCmd.AddCommand(Man(&conf))
 
-	err := rootCmd.Execute()
+	err = rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
