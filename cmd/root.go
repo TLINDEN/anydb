@@ -22,7 +22,7 @@ func completion(cmd *cobra.Command, mode string) error {
 	case "powershell":
 		return cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
 	default:
-		return errors.New("Invalid shell parameter! Valid ones: bash|zsh|fish|powershell")
+		return errors.New("invalid shell parameter! Valid ones: bash|zsh|fish|powershell")
 	}
 }
 
@@ -59,7 +59,7 @@ func Execute() {
 			}
 
 			if len(args) == 0 {
-				return errors.New("No command specified!")
+				return errors.New("no command specified")
 			}
 
 			return nil
@@ -79,9 +79,10 @@ func Execute() {
 
 	rootCmd.AddCommand(Set(&conf))
 	rootCmd.AddCommand(List(&conf))
-	// rootCmd.AddCommand(Set(&conf))
-	// rootCmd.AddCommand(Del(&conf))
-	// rootCmd.AddCommand(Find(&conf))
+	rootCmd.AddCommand(Get(&conf))
+	rootCmd.AddCommand(Del(&conf))
+	rootCmd.AddCommand(Export(&conf))
+	rootCmd.AddCommand(Import(&conf))
 	// rootCmd.AddCommand(Help(&conf))
 	// rootCmd.AddCommand(Man(&conf))
 
