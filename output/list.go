@@ -27,8 +27,6 @@ func List(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {
 	default:
 		return errors.New("unsupported mode")
 	}
-
-	return nil
 }
 
 func ListJson(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {

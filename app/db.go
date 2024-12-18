@@ -38,7 +38,9 @@ const BucketData string = "data"
 
 func New(file string, debug bool) (*DB, error) {
 	if _, err := os.Stat(filepath.Dir(file)); os.IsNotExist(err) {
-		os.MkdirAll(filepath.Dir(file), 0700)
+		if err := os.MkdirAll(filepath.Dir(file), 0700); err != nil {
+			return nil, err
+		}
 	}
 
 	return &DB{Debug: debug, Dbfile: file}, nil

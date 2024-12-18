@@ -43,11 +43,11 @@ ifdef HAVE_POD
 	echo "var manpage = \`" >> cmd/$*.go
 	pod2text $*.pod >> cmd/$*.go
 	echo "\`" >> cmd/$*.go
-
-	echo "var usage = \`" >> cmd/$*.go
-	awk '/SYNOPS/{f=1;next} /DESCR/{f=0} f' $*.pod  | sed 's/^    //' >> cmd/$*.go
-	echo "\`" >> cmd/$*.go
 endif
+
+# echo "var usage = \`" >> cmd/$*.go
+# awk '/SYNOPS/{f=1;next} /DESCR/{f=0} f' $*.pod  | sed 's/^    //' >> cmd/$*.go
+# echo "\`" >> cmd/$*.go
 
 buildlocal:
 	go build -ldflags "-X 'github.com/tlinden/anydb/cfg.VERSION=$(VERSION)'"

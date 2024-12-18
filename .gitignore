@@ -3,3 +3,4 @@ anydb
 *.db
 coverage.out
 *.json
+releases
