@@ -42,28 +42,3 @@ AUTHORS
     Thomas von Dein tom AT vondein DOT org
 
 `
-var usage = `
-
-Usage:
-  anydb <command> [options] [flags]
-  anydb [command]
-
-Available Commands:
-  completion  Generate the autocompletion script for the specified shell
-  del         Delete key
-  export      Export database to json
-  get         Retrieve value for a key
-  help        Help about any command
-  import      Import database dump
-  list        List database contents
-  set         Insert key/value pair
-
-Flags:
-  -f, --dbfile string   DB file to use (default "/home/scip/.config/anydb/default.db")
-  -d, --debug           Enable debugging
-  -h, --help            help for anydb
-  -v, --version         Print program version
-
-Use "anydb [command] --help" for more information about a command.
-
-`
