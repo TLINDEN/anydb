@@ -37,16 +37,16 @@ type DbTag struct {
 const BucketData string = "data"
 
 func New(file string, debug bool) (*DB, error) {
-	if _, err := os.Stat(filepath.Dir(file)); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(file), 0700); err != nil {
-			return nil, err
-		}
-	}
-
 	return &DB{Debug: debug, Dbfile: file}, nil
 }
 
 func (db *DB) Open() error {
+	if _, err := os.Stat(filepath.Dir(db.Dbfile)); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(db.Dbfile), 0700); err != nil {
+			return err
+		}
+	}
+
 	b, err := bolt.Open(db.Dbfile, 0600, nil)
 	if err != nil {
 		return err
