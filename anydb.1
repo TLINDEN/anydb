@@ -133,11 +133,49 @@
 .\" ========================================================================
 .\"
 .IX Title "ANYDB 1"
-.TH ANYDB 1 "2024-12-16" "1" "User Commands"
+.TH ANYDB 1 "2024-12-18" "1" "User Commands"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "anydb"
 .IX Header "anydb"
-\&\s-1FIXME\s0
+anydb \- a personal key value store
+.SH "SYNOPSIS"
+.IX Header "SYNOPSIS"
+.Vb 3
+\&    Usage:
+\&      anydb <command> [options] [flags]
+\&      anydb [command]
+\&    
+\&    Available Commands:
+\&      completion  Generate the autocompletion script for the specified shell
+\&      del         Delete key
+\&      export      Export database to json
+\&      get         Retrieve value for a key
+\&      help        Help about any command
+\&      import      Import database dump
+\&      list        List database contents
+\&      set         Insert key/value pair
+\&    
+\&    Flags:
+\&      \-f, \-\-dbfile string   DB file to use (default "/home/scip/.config/anydb/default.db")
+\&      \-d, \-\-debug           Enable debugging
+\&      \-h, \-\-help            help for anydb
+\&      \-v, \-\-version         Print program version
+\&    
+\&    Use "anydb [command] \-\-help" for more information about a command.
+.Ve
+.SH "DESCRIPTION"
+.IX Header "DESCRIPTION"
+Anydb is a simple to use commandline tool to store anything you'd
+like, even binary files etc. It uses a key/value store (bbolt) in your
+home directory.
+.SH "LICENSE"
+.IX Header "LICENSE"
+This software is licensed under the \s-1GNU GENERAL PUBLIC LICENSE\s0 version 3.
+.PP
+Copyright (c) 2024 by Thomas von Dein
+.SH "AUTHORS"
+.IX Header "AUTHORS"
+Thomas von Dein \fBtom \s-1AT\s0 vondein \s-1DOT\s0 org\fR

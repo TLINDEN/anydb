@@ -50,7 +50,7 @@ func Execute() {
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if ShowVersion {
-				fmt.Println(cfg.Version)
+				fmt.Printf("This is anydb version %s\n", cfg.Version)
 				return nil
 			}
 
@@ -83,8 +83,7 @@ func Execute() {
 	rootCmd.AddCommand(Del(&conf))
 	rootCmd.AddCommand(Export(&conf))
 	rootCmd.AddCommand(Import(&conf))
-	// rootCmd.AddCommand(Help(&conf))
-	// rootCmd.AddCommand(Man(&conf))
+	rootCmd.AddCommand(Man(&conf))
 
 	err = rootCmd.Execute()
 	if err != nil {

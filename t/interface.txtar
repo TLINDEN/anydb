@@ -1,0 +1,8 @@
+# check default outputs
+
+exec anydb -v
+stdout 'This is anydb version'
+
+! exec anydb
+stderr 'Available Commands:'
+

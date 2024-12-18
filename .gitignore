@@ -1,3 +1,5 @@
 anydb
 *.log
 *.db
+coverage.out
+*.json

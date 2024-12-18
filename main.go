@@ -11,7 +11,12 @@ import (
 )
 
 func main() {
+	Main()
+}
+
+func Main() int {
 	cmd.Execute()
+	return 0
 }
 
 func init() {

@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -115,8 +118,6 @@ func Del(conf *cfg.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&conf.Mode, "output", "o", "", "output to file")
-
 	cmd.Aliases = append(cmd.Aliases, "d")
 	cmd.Aliases = append(cmd.Aliases, "rm")
 
@@ -129,18 +130,12 @@ func Export(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "export [<json filename>]",
+		Use:   "export [-o <json filename>]",
 		Short: "Export database to json",
 		Long:  `Export database to json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// errors at this stage do not cause the usage to be shown
 			cmd.SilenceUsage = true
-
-			if len(args) == 0 {
-				attr.File = "-"
-			} else {
-				attr.File = args[0]
-			}
 
 			conf.Mode = "json"
 
@@ -152,6 +147,8 @@ func Export(conf *cfg.Config) *cobra.Command {
 			return output.WriteFile(&attr, conf, entries)
 		},
 	}
+
+	cmd.PersistentFlags().StringVarP(&attr.File, "output", "o", "", "output to file")
 
 	cmd.Aliases = append(cmd.Aliases, "dump")
 	cmd.Aliases = append(cmd.Aliases, "backup")
@@ -219,12 +216,6 @@ func Import(conf *cfg.Config) *cobra.Command {
 			// errors at this stage do not cause the usage to be shown
 			cmd.SilenceUsage = true
 
-			if len(args) == 0 {
-				attr.File = "-"
-			} else {
-				attr.File = args[0]
-			}
-
 			return conf.DB.Import(&attr)
 		},
 	}
@@ -244,5 +235,33 @@ func Help(conf *cfg.Config) *cobra.Command {
 }
 
 func Man(conf *cfg.Config) *cobra.Command {
-	return nil
+	var cmd = &cobra.Command{
+		Use:   "man",
+		Short: "show manual page",
+		Long:  `show manual page`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// errors at this stage do not cause the usage to be shown
+			cmd.SilenceUsage = true
+
+			man := exec.Command("less", "-")
+
+			var b bytes.Buffer
+
+			b.WriteString(manpage)
+
+			man.Stdout = os.Stdout
+			man.Stdin = &b
+			man.Stderr = os.Stderr
+
+			err := man.Run()
+
+			if err != nil {
+				return fmt.Errorf("failed to execute 'less': %w", err)
+			}
+
+			return nil
+		},
+	}
+
+	return cmd
 }

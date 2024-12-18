@@ -1,0 +1,17 @@
+# simple file, we cannot use redirection here, so dd is our friend
+exec dd if=/dev/random of=file.txt count=5 bs=10
+
+# add file to db
+exec anydb -f test.db set datum -r file.txt
+
+# check for existence
+exec anydb -f test.db get datum -o out.txt
+exists out.txt
+
+# check if its filled (50 bytes == count=5 x bs=10)
+exec ls -l out.txt
+stdout 50
+
+# look if it's inside the db
+exec anydb -f test.db ls
+stdout datum.*binary-content
