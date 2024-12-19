@@ -120,7 +120,7 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 			return nil
 		})
 
-		return fmt.Errorf("failed to read from DB: %w", err)
+		return err
 	})
 	return entries, err
 }

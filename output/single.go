@@ -68,7 +68,7 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 
 		fmt.Println(string(jsonentry))
 	case "wide":
-		ListTable(writer, conf, app.DbEntries{*entry})
+		return ListTable(writer, conf, app.DbEntries{*entry})
 	}
 
 	return nil

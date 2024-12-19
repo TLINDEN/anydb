@@ -9,7 +9,7 @@ exec anydb -f test.db list
 stdout foo.*bar
 
 # wide list
-exec anydb -f test.db list -o wide
+exec anydb -f test.db list -m wide
 stdout 'plant.*now.*grey'
 
 # list tagged
@@ -41,6 +41,13 @@ stdout grey
 # check modified tagged, make sure
 exec anydb -f test.db list -t flower
 ! stdout grey
+
+# check json output
+exec anydb -f test.db list -m json
+stdout '^\[\{'
+
+exec anydb -f test.db get color -m json
+stdout '^\{'
 
 # delete entry
 exec anydb -f test.db del foo
