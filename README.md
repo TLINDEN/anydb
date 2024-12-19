@@ -130,6 +130,25 @@ There are multiple ways to install **anydb**:
 If you  do not find a  binary release for your  platform, please don't
 hesitate to ask me about it, I'll add it.
 
+### Using the docker image
+
+A pre-built docker  image is available, which you can  use to test the
+app without  installing it. To download:
+
+```shell
+docker pull ghcr.io/tlinden/anydb:latest
+```
+
+To execute anydb  inside the image do something like this:
+
+```shell
+mkdir myads
+docker run ghcr.io/tlinden/anydb:latest --help
+```
+
+A list of available images is  [here](https://github.com/tlinden/anydb/pkgs/container/anydb/versions?filters%5Bversion_type%5D=tagged)
+
+
 ## Documentation
 
 The  documentation  is  provided  as  a unix  man-page.   It  will  be
