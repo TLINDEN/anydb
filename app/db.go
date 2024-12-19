@@ -20,12 +20,13 @@ type DB struct {
 }
 
 type DbEntry struct {
-	Id      string    `json:"id"`
-	Key     string    `json:"key"`
-	Value   string    `json:"value"`
-	Bin     []byte    `json:"bin"`
-	Tags    []string  `json:"tags"`
-	Created time.Time `json:"created"`
+	Id        string    `json:"id"`
+	Key       string    `json:"key"`
+	Value     string    `json:"value"`
+	Encrypted bool      `json:"encrypted"`
+	Bin       []byte    `json:"bin"`
+	Tags      []string  `json:"tags"`
+	Created   time.Time `json:"created"`
 }
 
 type DbEntries []DbEntry
@@ -130,16 +131,13 @@ func (db *DB) Set(attr *DbAttr) error {
 	}
 	defer db.Close()
 
-	if err := attr.ParseKV(); err != nil {
-		return err
-	}
-
 	entry := DbEntry{
-		Key:     attr.Key,
-		Value:   attr.Val,
-		Bin:     attr.Bin,
-		Tags:    attr.Tags,
-		Created: time.Now(),
+		Key:       attr.Key,
+		Value:     attr.Val,
+		Bin:       attr.Bin,
+		Tags:      attr.Tags,
+		Encrypted: attr.Encrypted,
+		Created:   time.Now(),
 	}
 
 	// check if the  entry already exists and if yes,  check if it has

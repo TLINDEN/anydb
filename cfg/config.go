@@ -9,6 +9,7 @@ type Config struct {
 	Dbfile    string
 	Mode      string // wide, table, yaml, json
 	NoHeaders bool
+	Encrypt   bool
 	DB        *app.DB
 	File      string
 	Tags      []string

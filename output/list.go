@@ -54,8 +54,12 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 	for _, row := range entries {
 		size := len(row.Value)
 
+		if row.Encrypted {
+			row.Value = "<encrypted-content>"
+		}
+
 		if len(row.Bin) > 0 {
-			row.Value = "binary-content"
+			row.Value = "<binary-content>"
 			size = len(row.Bin)
 		}
 

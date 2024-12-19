@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
@@ -40,10 +41,29 @@ func Set(conf *cfg.Config) *cobra.Command {
 				attr.Tags = strings.Split(attr.Tags[0], ",")
 			}
 
+			// check if value given as file or via stdin and fill attr accordingly
+			if err := attr.ParseKV(); err != nil {
+				return err
+			}
+
+			// encrypt?
+			if conf.Encrypt {
+				pass, err := app.AskForPassword()
+				if err != nil {
+					return err
+				}
+
+				err = app.Encrypt(pass, &attr)
+				if err != nil {
+					return err
+				}
+			}
+
 			return conf.DB.Set(&attr)
 		},
 	}
 
+	cmd.PersistentFlags().BoolVarP(&conf.Encrypt, "encrypt", "e", false, "encrypt value")
 	cmd.PersistentFlags().StringVarP(&attr.File, "file", "r", "", "Filename or - for STDIN")
 	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")
 
@@ -78,6 +98,26 @@ func Get(conf *cfg.Config) *cobra.Command {
 			entry, err := conf.DB.Get(&attr)
 			if err != nil {
 				return err
+			}
+
+			if entry.Encrypted {
+				pass, err := app.AskForPassword()
+				if err != nil {
+					return err
+				}
+
+				clear, err := app.Decrypt(pass, entry.Value)
+				if err != nil {
+					return err
+				}
+
+				if utf8.ValidString(string(clear)) {
+					entry.Value = string(clear)
+				} else {
+					entry.Bin = clear
+				}
+
+				entry.Encrypted = false
 			}
 
 			return output.Print(os.Stdout, conf, &attr, entry)

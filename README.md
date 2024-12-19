@@ -15,7 +15,14 @@ reasons:
   anymore. The badger file format on the other hand changes very
   often, which is not good for a tool intended to be used for many
   years.
-- more features
+- more features:
+  - better STDIN + pipe support
+  - supports JSON output
+  - supports more verbose tabular output
+  - filtering using regular expressions
+  - tagging
+  - filtering using tags
+  - encryption of entries
 
 **anydb** can do all the things you can do with skate:
 
@@ -83,6 +90,11 @@ anydb export -o backup.json
 # and import it somewhere else
 anydb import -r backup.json
 
+# you can encrypt entries. anydb asks for a passphrase
+# and will do the same when you retrieve the key using the
+# get command.
+anydb set mypassword -e
+
 # it comes with a manpage builtin
 anydb man
 ```
@@ -98,16 +110,21 @@ There are multiple ways to install **anydb**:
   
 - The release page also contains a tarball for every supported platform. Unpack it
   to some temporary directory, extract it and execute the following command inside:
-  ```
+  ```shell
   sudo make install
   ```
   
 - You can also install from source. Issue the following commands in your shell:
-  ```
+  ```shell
   git clone https://github.com/TLINDEN/anydb.git
   cd anydb
   make
   sudo make install
+  ```
+
+- Or, if you have the GO toolkit installed, just install it like this:
+  ```shell
+  go install github.com/tlinden/anydb@latest
   ```
 
 If you  do not find a  binary release for your  platform, please don't

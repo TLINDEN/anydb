@@ -8,12 +8,13 @@ import (
 )
 
 type DbAttr struct {
-	Key  string
-	Val  string
-	Bin  []byte
-	Args []string
-	Tags []string
-	File string
+	Key       string
+	Val       string
+	Bin       []byte
+	Args      []string
+	Tags      []string
+	File      string
+	Encrypted bool
 }
 
 func (attr *DbAttr) ParseKV() error {
