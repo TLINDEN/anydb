@@ -2,7 +2,7 @@ package cfg
 
 import "github.com/tlinden/anydb/app"
 
-var Version string = "v0.0.1"
+var Version string = "v0.0.2"
 
 type Config struct {
 	Debug     bool
