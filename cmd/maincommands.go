@@ -60,7 +60,7 @@ func Get(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "get <key> [-o <file>]",
+		Use:   "get <key> [-o <file>] [-m <mode>] [-n]",
 		Short: "Retrieve value for a key",
 		Long:  `Retrieve value for a key`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -80,11 +80,13 @@ func Get(conf *cfg.Config) *cobra.Command {
 				return err
 			}
 
-			return output.Print(os.Stdout, conf, entry)
+			return output.Print(os.Stdout, conf, &attr, entry)
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&conf.Mode, "output", "o", "", "output to file")
+	cmd.PersistentFlags().StringVarP(&attr.File, "output", "o", "", "output to file (ignores -m)")
+	cmd.PersistentFlags().StringVarP(&conf.Mode, "mode", "m", "", "output format (simple|wide|json) (default 'simple')")
+	cmd.PersistentFlags().BoolVarP(&conf.NoHeaders, "no-headers", "n", false, "omit headers in tables")
 
 	cmd.Aliases = append(cmd.Aliases, "show")
 	cmd.Aliases = append(cmd.Aliases, "g")
@@ -192,7 +194,7 @@ func List(conf *cfg.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&conf.Mode, "output-mode", "o", "", "output format (table|wide|json), wide is a verbose table. (default 'table')")
+	cmd.PersistentFlags().StringVarP(&conf.Mode, "mode", "m", "", "output format (table|wide|json), wide is a verbose table. (default 'table')")
 	cmd.PersistentFlags().BoolVarP(&wide, "wide-output", "l", false, "output mode: wide")
 	cmd.PersistentFlags().BoolVarP(&conf.NoHeaders, "no-headers", "n", false, "omit headers in tables")
 	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")

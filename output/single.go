@@ -1,6 +1,7 @@
 package output
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -11,10 +12,9 @@ import (
 	"golang.org/x/term"
 )
 
-func Print(writer io.Writer, conf *cfg.Config, entry *app.DbEntry) error {
-	if conf.Mode != "" {
-		// consider this to be a file
-		fd, err := os.OpenFile(conf.Mode, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEntry) error {
+	if attr.File != "" {
+		fd, err := os.OpenFile(attr.File, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			return err
 		}
@@ -41,19 +41,34 @@ func Print(writer io.Writer, conf *cfg.Config, entry *app.DbEntry) error {
 	}
 
 	isatty := term.IsTerminal(int(os.Stdout.Fd()))
-	if len(entry.Bin) > 0 {
-		if isatty {
-			fmt.Println("binary data omitted")
-		} else {
-			os.Stdout.Write(entry.Bin)
-		}
-	} else {
-		fmt.Print(entry.Value)
 
-		if !strings.HasSuffix(entry.Value, "\n") {
-			// always add a terminal newline
-			fmt.Println()
+	switch conf.Mode {
+	case "simple":
+		fallthrough
+	case "":
+		if len(entry.Bin) > 0 {
+			if isatty {
+				fmt.Println("binary data omitted")
+			} else {
+				os.Stdout.Write(entry.Bin)
+			}
+		} else {
+			fmt.Print(entry.Value)
+
+			if !strings.HasSuffix(entry.Value, "\n") {
+				// always add a terminal newline
+				fmt.Println()
+			}
 		}
+	case "json":
+		jsonentry, err := json.Marshal(entry)
+		if err != nil {
+			return fmt.Errorf("json marshalling failure: %s", err)
+		}
+
+		fmt.Println(string(jsonentry))
+	case "wide":
+		ListTable(writer, conf, app.DbEntries{*entry})
 	}
 
 	return nil

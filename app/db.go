@@ -206,10 +206,6 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 	}
 	defer db.Close()
 
-	if err := attr.ParseKV(); err != nil {
-		return nil, err
-	}
-
 	entry := DbEntry{}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
