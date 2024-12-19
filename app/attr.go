@@ -52,7 +52,7 @@ func (attr *DbAttr) GetFileValue() error {
 	} else {
 		filehandle, err := os.OpenFile(attr.File, os.O_RDONLY, 0600)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open file %s: %w", attr.File, err)
 		}
 
 		fd = filehandle
@@ -62,7 +62,7 @@ func (attr *DbAttr) GetFileValue() error {
 		// read from file or stdin pipe
 		data, err := io.ReadAll(fd)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read from pipe: %w", err)
 		}
 
 		// poor man's text file test

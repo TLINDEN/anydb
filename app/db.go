@@ -50,7 +50,7 @@ func New(file string, debug bool) (*DB, error) {
 func (db *DB) Open() error {
 	b, err := bolt.Open(db.Dbfile, 0600, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open DB %s: %w", db.Dbfile, err)
 	}
 
 	db.DB = b
@@ -84,7 +84,7 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 		err := bucket.ForEach(func(key, jsonentry []byte) error {
 			var entry DbEntry
 			if err := json.Unmarshal(jsonentry, &entry); err != nil {
-				return fmt.Errorf("unable to unmarshal json: %s", err)
+				return fmt.Errorf("failed to unmarshal from json: %w", err)
 			}
 
 			var include bool
@@ -120,7 +120,7 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 			return nil
 		})
 
-		return err
+		return fmt.Errorf("failed to read from DB: %w", err)
 	})
 	return entries, err
 }
@@ -156,7 +156,7 @@ func (db *DB) Set(attr *DbAttr) error {
 
 		var oldentry DbEntry
 		if err := json.Unmarshal(jsonentry, &oldentry); err != nil {
-			return fmt.Errorf("unable to unmarshal json: %s", err)
+			return fmt.Errorf("failed to unmarshal from json: %w", err)
 		}
 
 		if len(oldentry.Tags) > 0 && len(entry.Tags) == 0 {
@@ -175,17 +175,17 @@ func (db *DB) Set(attr *DbAttr) error {
 		// insert data
 		bucket, err := tx.CreateBucketIfNotExists([]byte(BucketData))
 		if err != nil {
-			return fmt.Errorf("create bucket: %s", err)
+			return fmt.Errorf("failed to create DB bucket: %w", err)
 		}
 
 		jsonentry, err := json.Marshal(entry)
 		if err != nil {
-			return fmt.Errorf("json marshalling failure: %s", err)
+			return fmt.Errorf("failed to marshall json: %w", err)
 		}
 
 		err = bucket.Put([]byte(entry.Key), []byte(jsonentry))
 		if err != nil {
-			return fmt.Errorf("insert data: %s", err)
+			return fmt.Errorf("failed to insert data: %w", err)
 		}
 
 		return nil
@@ -218,14 +218,14 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 		}
 
 		if err := json.Unmarshal(jsonentry, &entry); err != nil {
-			return fmt.Errorf("unable to unmarshal json: %s", err)
+			return fmt.Errorf("failed to unmarshal from json: %w", err)
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read from DB: %w", err)
 	}
 
 	return &entry, nil
@@ -265,14 +265,14 @@ func (db *DB) Import(attr *DbAttr) error {
 	newfile := db.Dbfile + now.Format("-02.01.2006T03:04.05")
 
 	if err := json.Unmarshal([]byte(attr.Val), &entries); err != nil {
-		return cleanError(newfile, fmt.Errorf("unable to unmarshal json: %s", err))
+		return cleanError(newfile, fmt.Errorf("failed to unmarshal json: %w", err))
 	}
 
 	if fileExists(db.Dbfile) {
 		// backup the old file
 		err := os.Rename(db.Dbfile, newfile)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to rename file %s to %s: %w", db.Dbfile, newfile, err)
 		}
 
 	}
@@ -287,18 +287,18 @@ func (db *DB) Import(attr *DbAttr) error {
 		// insert data
 		bucket, err := tx.CreateBucketIfNotExists([]byte(BucketData))
 		if err != nil {
-			return fmt.Errorf("create bucket: %s", err)
+			return fmt.Errorf("failed to create bucket: %w", err)
 		}
 
 		for _, entry := range entries {
 			jsonentry, err := json.Marshal(entry)
 			if err != nil {
-				return fmt.Errorf("json marshalling failure: %s", err)
+				return fmt.Errorf("failed to marshall json: %w", err)
 			}
 
 			err = bucket.Put([]byte(entry.Key), []byte(jsonentry))
 			if err != nil {
-				return fmt.Errorf("insert data: %s", err)
+				return fmt.Errorf("failed to insert data into DB: %w", err)
 			}
 		}
 

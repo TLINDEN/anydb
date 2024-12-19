@@ -16,7 +16,7 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 	if attr.File != "" {
 		fd, err := os.OpenFile(attr.File, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open file %s for writing: %w", attr.File, err)
 		}
 		defer fd.Close()
 
@@ -34,7 +34,7 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 		}
 
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to write to file %s: %w", attr.File, err)
 		}
 
 		return nil
@@ -63,7 +63,7 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 	case "json":
 		jsonentry, err := json.Marshal(entry)
 		if err != nil {
-			return fmt.Errorf("json marshalling failure: %s", err)
+			return fmt.Errorf("failed to marshall json: %s", err)
 		}
 
 		fmt.Println(string(jsonentry))

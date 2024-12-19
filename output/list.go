@@ -32,7 +32,7 @@ func List(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {
 func ListJson(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {
 	jsonentries, err := json.Marshal(entries)
 	if err != nil {
-		return fmt.Errorf("json marshalling failure: %s", err)
+		return fmt.Errorf("failed marshall json: %s", err)
 	}
 
 	fmt.Println(string(jsonentries))

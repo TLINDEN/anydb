@@ -33,7 +33,7 @@ func AskForPassword() ([]byte, error) {
 	fmt.Fprint(os.Stderr, "Password: ")
 	pass, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read password: %w", err)
 	}
 
 	fmt.Fprintln(os.Stderr)
@@ -77,7 +77,7 @@ func GetRandom(size int, capacity int) ([]byte, error) {
 	buf := make([]byte, size, capacity)
 	_, err := rand.Read(buf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve random bytes: %w", err)
 	}
 
 	return buf, nil
@@ -97,7 +97,7 @@ func Encrypt(pass []byte, attr *DbAttr) error {
 
 	aead, err := chacha20poly1305.New(key.Key)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create AEAD cipher: %w", err)
 	}
 
 	var plain []byte
@@ -129,7 +129,7 @@ func Encrypt(pass []byte, attr *DbAttr) error {
 func Decrypt(pass []byte, cipherb64 string) ([]byte, error) {
 	salt, err := base64.RawStdEncoding.Strict().DecodeString(cipherb64[0:B64SaltLen])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to encode to base64: %w", err)
 	}
 
 	key, err := DeriveKey(pass, salt)
@@ -139,12 +139,12 @@ func Decrypt(pass []byte, cipherb64 string) ([]byte, error) {
 
 	cipher, err := base64.RawStdEncoding.Strict().DecodeString(cipherb64[B64SaltLen:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to encode to base64: %w", err)
 	}
 
 	aead, err := chacha20poly1305.New(key.Key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create AEAD cipher: %w", err)
 	}
 
 	if len(cipher) < aead.NonceSize() {
