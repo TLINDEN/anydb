@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package rest
 
 import (
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/compress"
-	"github.com/gofiber/fiber/v3/middleware/cors"
-	"github.com/gofiber/fiber/v3/middleware/logger"
-	"github.com/gofiber/fiber/v3/middleware/requestid"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/tlinden/anydb/cfg"
 )
 
@@ -39,27 +39,26 @@ func Runserver(conf *cfg.Config, args []string) error {
 	// public rest api routes
 	api := router.Group("/anydb/v1")
 	{
-		api.Get("/", func(c fiber.Ctx) error {
+		api.Get("/", func(c *fiber.Ctx) error {
 			return RestList(c, conf)
 		})
 
-		api.Get("/:key", func(c fiber.Ctx) error {
+		api.Get("/:key", func(c *fiber.Ctx) error {
 			return RestGet(c, conf)
 		})
 
-		api.Delete("/:key", func(c fiber.Ctx) error {
+		api.Delete("/:key", func(c *fiber.Ctx) error {
 			return RestDelete(c, conf)
 		})
-		/*
-			   api.Put("/", nil, func(c *fiber.Ctx) error {
-					return RestSet(c, conf)
-				})
-		*/
+
+		api.Put("/", func(c *fiber.Ctx) error {
+			return RestSet(c, conf)
+		})
 	}
 
 	// public routes
 	{
-		router.Get("/", func(c fiber.Ctx) error {
+		router.Get("/", func(c *fiber.Ctx) error {
 			return c.Send([]byte("Use the REST API"))
 		})
 	}
@@ -68,6 +67,9 @@ func Runserver(conf *cfg.Config, args []string) error {
 }
 
 func SetupServer(conf *cfg.Config) *fiber.App {
+	// disable colors
+	fiber.DefaultColors = fiber.Colors{}
+
 	router := fiber.New(fiber.Config{
 		CaseSensitive: true,
 		StrictRouting: true,
@@ -79,12 +81,13 @@ func SetupServer(conf *cfg.Config) *fiber.App {
 	router.Use(requestid.New())
 
 	router.Use(logger.New(logger.Config{
-		Format: "${pid} ${locals:requestid} ${status} - ${method} ${path}​\n",
+		Format:        "${pid} ${locals:requestid} ${status} - ${method} ${path}​\n",
+		DisableColors: true,
 	}))
 
 	router.Use(cors.New(cors.Config{
-		AllowMethods:  []string{"GET", "PUT", "POST", "DELETE"},
-		ExposeHeaders: []string{"Content-Type", "Accept"},
+		AllowMethods:  "GET,PUT,POST,DELETE",
+		ExposeHeaders: "Content-Type,Accept",
 	}))
 
 	router.Use(compress.New(compress.Config{
@@ -98,7 +101,7 @@ func SetupServer(conf *cfg.Config) *fiber.App {
 Wrapper to respond with proper json status, message and code,
 shall be prepared and called by the handlers directly.
 */
-func JsonStatus(c fiber.Ctx, code int, msg string) error {
+func JsonStatus(c *fiber.Ctx, code int, msg string) error {
 	success := true
 
 	if code != fiber.StatusOK {
