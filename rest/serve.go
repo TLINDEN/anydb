@@ -21,7 +21,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/tlinden/anydb/cfg"
 )
 
@@ -78,10 +77,8 @@ func SetupServer(conf *cfg.Config) *fiber.App {
 		AppName:       "anydb",
 	})
 
-	router.Use(requestid.New())
-
 	router.Use(logger.New(logger.Config{
-		Format:        "${pid} ${locals:requestid} ${status} - ${method} ${path}​\n",
+          Format:        "${pid} ${ip}:${port} ${status} - ${method} ${path}\n",
 		DisableColors: true,
 	}))
 
