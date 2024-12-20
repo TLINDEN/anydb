@@ -25,6 +25,7 @@ reasons:
   - filtering using tags
   - encryption of entries
   - templates for custom output for maximum flexibility
+  - includes a tiny web server, which serves a restful API
 
 **anydb** can do all the things you can do with skate:
 
@@ -109,6 +110,20 @@ anydb ls -m template -T "{{ .Value }}"
 # note, that both the list and get commands support templates
 eval $(anydb get foo -m template -T "key='{{ .Key }}' value='{{ .Value }}' ts='{{ .Created}}'")
 echo "$key: $value"
+
+# run the restful api server
+anydb serve
+
+# post a new key
+curl -X PUT localhost:8787/anydb/v1/ \
+  -H 'Content-Type: application/json' \
+  -d '{"key":"foo","val":"bar"}'
+
+# retrieve it
+curl localhost:8787/anydb/v1/foo
+
+# list keys
+curl localhost:8787/anydb/v1/
 
 # it comes with a manpage builtin
 anydb man
