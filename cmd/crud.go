@@ -322,9 +322,7 @@ func Serve(conf *cfg.Config) *cobra.Command {
 			// errors at this stage do not cause the usage to be shown
 			cmd.SilenceUsage = true
 
-			rest.Runserver(conf, nil)
-
-			return nil
+			return rest.Runserver(conf, nil)
 		},
 	}
 
