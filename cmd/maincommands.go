@@ -13,6 +13,7 @@ import (
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
 	"github.com/tlinden/anydb/output"
+	"github.com/tlinden/anydb/rest"
 )
 
 func Set(conf *cfg.Config) *cobra.Command {
@@ -308,6 +309,26 @@ func Man(conf *cfg.Config) *cobra.Command {
 			return nil
 		},
 	}
+
+	return cmd
+}
+
+func Serve(conf *cfg.Config) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "serve [-l host:port]",
+		Short: "run REST API listener",
+		Long:  `run REST API listener`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// errors at this stage do not cause the usage to be shown
+			cmd.SilenceUsage = true
+
+			rest.Runserver(conf, nil)
+
+			return nil
+		},
+	}
+
+	cmd.PersistentFlags().StringVarP(&conf.Listen, "listen", "l", "localhost:8787", "host:port")
 
 	return cmd
 }

@@ -15,4 +15,5 @@ type Config struct {
 	DB         *app.DB
 	File       string
 	Tags       []string
+	Listen     string
 }

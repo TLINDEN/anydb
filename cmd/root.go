@@ -83,6 +83,7 @@ func Execute() {
 	rootCmd.AddCommand(Del(&conf))
 	rootCmd.AddCommand(Export(&conf))
 	rootCmd.AddCommand(Import(&conf))
+	rootCmd.AddCommand(Serve(&conf))
 	rootCmd.AddCommand(Man(&conf))
 
 	err = rootCmd.Execute()
