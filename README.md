@@ -157,9 +157,14 @@ docker pull ghcr.io/tlinden/anydb:latest
 To execute anydb  inside the image do something like this:
 
 ```shell
-mkdir myads
-docker run ghcr.io/tlinden/anydb:latest --help
+mkdir mydb
+docker run -ti  -v mydb:/db -u `id -u $USER` -e HOME=/db ghcr.io/tlinden/anydb:latest set foo bar
+docker run -ti  -v mydb:/db -u `id -u $USER` -e HOME=/db ghcr.io/tlinden/anydb:latest list -o wide
 ```
+
+Here, we operate in a local  directory `mydb`, which we'll use as HOME
+inside  the  docker  container.  anydb  will  store  its  database  in
+`mydb/.config/anydb/default.db`.
 
 A list of available images is  [here](https://github.com/tlinden/anydb/pkgs/container/anydb/versions?filters%5Bversion_type%5D=tagged)
 
