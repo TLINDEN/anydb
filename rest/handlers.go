@@ -19,7 +19,7 @@ package rest
 import (
 	//"github.com/alecthomas/repr"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
 )
@@ -40,19 +40,21 @@ type SingleResponse struct {
 	Entry   *app.DbEntry
 }
 
-func RestList(c fiber.Ctx, conf *cfg.Config) error {
-	// FIXME: Check for tags and filter
-	// FIXME: https://github.com/gofiber/fiber/blob/main/docs/api/bind.md#body
-	/*
-		setcontext := new(SetContext)
-		if err := c.Bind().Body(setcontext); err != nil {
-			return JsonStatus(c, fiber.StatusForbidden,
-				"Unable to parse body: "+err.Error())
+func RestList(c *fiber.Ctx, conf *cfg.Config) error {
+	attr := new(app.DbAttr)
+
+	if len(c.Body()) > 0 {
+
+		if err := c.BodyParser(attr); err != nil {
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+				"errors": err.Error(),
+			})
+
 		}
-	*/
+	}
 
 	// get list
-	entries, err := conf.DB.List(&app.DbAttr{})
+	entries, err := conf.DB.List(attr)
 	if err != nil {
 		return JsonStatus(c, fiber.StatusForbidden,
 			"Unable to list keys: "+err.Error())
@@ -67,7 +69,7 @@ func RestList(c fiber.Ctx, conf *cfg.Config) error {
 	)
 }
 
-func RestGet(c fiber.Ctx, conf *cfg.Config) error {
+func RestGet(c *fiber.Ctx, conf *cfg.Config) error {
 	if c.Params("key") == "" {
 		return JsonStatus(c, fiber.StatusForbidden,
 			"key not provided")
@@ -93,7 +95,7 @@ func RestGet(c fiber.Ctx, conf *cfg.Config) error {
 	)
 }
 
-func RestDelete(c fiber.Ctx, conf *cfg.Config) error {
+func RestDelete(c *fiber.Ctx, conf *cfg.Config) error {
 	if c.Params("key") == "" {
 		return JsonStatus(c, fiber.StatusForbidden,
 			"key not provided")
@@ -115,4 +117,25 @@ func RestDelete(c fiber.Ctx, conf *cfg.Config) error {
 	)
 }
 
-// FIXME: add RestSet()
+func RestSet(c *fiber.Ctx, conf *cfg.Config) error {
+	attr := new(app.DbAttr)
+	if err := c.BodyParser(attr); err != nil {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"errors": err.Error(),
+		})
+
+	}
+
+	err := conf.DB.Set(attr)
+	if err != nil {
+		return JsonStatus(c, fiber.StatusForbidden,
+			"Unable to set key: "+err.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(
+		Result{
+			Success: true,
+			Code:    fiber.StatusOK,
+		},
+	)
+}
