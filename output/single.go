@@ -14,8 +14,7 @@ import (
 
 func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEntry) error {
 	if attr.File != "" {
-		WriteFile(writer, conf, attr, entry)
-
+		return WriteFile(writer, conf, attr, entry)
 	}
 
 	isatty := term.IsTerminal(int(os.Stdout.Fd()))
