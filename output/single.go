@@ -14,38 +14,14 @@ import (
 
 func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEntry) error {
 	if attr.File != "" {
-		fd, err := os.OpenFile(attr.File, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
-		if err != nil {
-			return fmt.Errorf("failed to open file %s for writing: %w", attr.File, err)
-		}
-		defer fd.Close()
+		WriteFile(writer, conf, attr, entry)
 
-		if len(entry.Bin) > 0 {
-			// binary file content
-			_, err = fd.Write(entry.Bin)
-		} else {
-			val := entry.Value
-			if !strings.HasSuffix(val, "\n") {
-				// always add a terminal newline
-				val += "\n"
-			}
-
-			_, err = fd.Write([]byte(val))
-		}
-
-		if err != nil {
-			return fmt.Errorf("failed to write to file %s: %w", attr.File, err)
-		}
-
-		return nil
 	}
 
 	isatty := term.IsTerminal(int(os.Stdout.Fd()))
 
 	switch conf.Mode {
-	case "simple":
-		fallthrough
-	case "":
+	case "simple", "":
 		if len(entry.Bin) > 0 {
 			if isatty {
 				fmt.Println("binary data omitted")
@@ -69,6 +45,35 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 		fmt.Println(string(jsonentry))
 	case "wide":
 		return ListTable(writer, conf, app.DbEntries{*entry})
+	case "template":
+		return ListTemplate(writer, conf, app.DbEntries{*entry})
+	}
+
+	return nil
+}
+
+func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEntry) error {
+	fd, err := os.OpenFile(attr.File, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to open file %s for writing: %w", attr.File, err)
+	}
+	defer fd.Close()
+
+	if len(entry.Bin) > 0 {
+		// binary file content
+		_, err = fd.Write(entry.Bin)
+	} else {
+		val := entry.Value
+		if !strings.HasSuffix(val, "\n") {
+			// always add a terminal newline
+			val += "\n"
+		}
+
+		_, err = fd.Write([]byte(val))
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to write to file %s: %w", attr.File, err)
 	}
 
 	return nil

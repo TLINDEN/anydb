@@ -16,6 +16,7 @@ reasons:
   often, which is not good for a tool intended to be used for many
   years.
 - more features:
+  - output table in list mode uses <tab> separator
   - better STDIN + pipe support
   - supports JSON output
   - supports more verbose tabular output
@@ -23,6 +24,7 @@ reasons:
   - tagging
   - filtering using tags
   - encryption of entries
+  - templates for custom output for maximum flexibility
 
 **anydb** can do all the things you can do with skate:
 
@@ -74,8 +76,8 @@ anydb list '[a-z]+\d'
 anydb list -o wide
 KEY     TAGS            SIZE    AGE             VALUE 
 blah    important       4 B     7 seconds ago   haha 
-foo                     3 B     15 seconds ago  bar  
-猫咪                    3 B     3 seconds ago   喵   
+foo                     3 B     15 seconds ago  bar
+猫咪                    3 B     3 seconds ago   喵
 
 # there are shortcuts as well
 anydb ls -l
@@ -94,6 +96,19 @@ anydb import -r backup.json
 # and will do the same when you retrieve the key using the
 # get command.
 anydb set mypassword -e
+
+# using template output mode you can freely design how to print stuff
+# here, we print the values in CSV format ONLY if they have some tag
+anydb ls -m template -T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created}}{{ end }}"
+
+# or, to simulate skate's -k or -v
+anydb ls -m template -T "{{ .Key }}"
+anydb ls -m template -T "{{ .Value }}"
+
+# maybe you want to digest the item in a shell script? also
+# note, that both the list and get commands support templates
+eval $(anydb get foo -m template -T "key='{{ .Key }}' value='{{ .Value }}' ts='{{ .Created}}'")
+echo "$key: $value"
 
 # it comes with a manpage builtin
 anydb man

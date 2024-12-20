@@ -13,6 +13,8 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+const MaxValueWidth int = 60
+
 type DB struct {
 	Debug  bool
 	Dbfile string
@@ -27,6 +29,26 @@ type DbEntry struct {
 	Bin       []byte    `json:"bin"`
 	Tags      []string  `json:"tags"`
 	Created   time.Time `json:"created"`
+	Size      int
+}
+
+// Post process an entry for list output.
+// Do NOT call it during write processing!
+func (entry *DbEntry) Normalize() {
+	entry.Size = len(entry.Value)
+
+	if entry.Encrypted {
+		entry.Value = "<encrypted-content>"
+	}
+
+	if len(entry.Bin) > 0 {
+		entry.Value = "<binary-content>"
+		entry.Size = len(entry.Bin)
+	}
+
+	if len(entry.Value) > MaxValueWidth {
+		entry.Value = entry.Value[0:MaxValueWidth] + "..."
+	}
 }
 
 type DbEntries []DbEntry

@@ -9,7 +9,7 @@ import (
 	"github.com/tlinden/anydb/cfg"
 )
 
-func WriteFile(attr *app.DbAttr, conf *cfg.Config, entries app.DbEntries) error {
+func WriteJSON(attr *app.DbAttr, conf *cfg.Config, entries app.DbEntries) error {
 	jsonentries, err := json.Marshal(entries)
 	if err != nil {
 		return fmt.Errorf("failed to marshall json: %w", err)

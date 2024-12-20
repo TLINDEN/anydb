@@ -2,15 +2,17 @@ package cfg
 
 import "github.com/tlinden/anydb/app"
 
-var Version string = "v0.0.2"
+var Version string = "v0.0.3"
 
 type Config struct {
-	Debug     bool
-	Dbfile    string
-	Mode      string // wide, table, yaml, json
-	NoHeaders bool
-	Encrypt   bool
-	DB        *app.DB
-	File      string
-	Tags      []string
+	Debug      bool
+	Dbfile     string
+	Template   string
+	Mode       string // wide, table, yaml, json
+	NoHeaders  bool
+	NoHumanize bool
+	Encrypt    bool
+	DB         *app.DB
+	File       string
+	Tags       []string
 }
