@@ -254,6 +254,7 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 }
 
 func (db *DB) Del(attr *DbAttr) error {
+	// FIXME: check if it exists prior to just call bucket.Delete()?
 	if err := db.Open(); err != nil {
 		return err
 	}
