@@ -1,4 +1,4 @@
-- rest api gin
+- add api doc + samples
 - repl
 - mime-type => exec app + value
 - custom buckets (like skate: key@bucket or key+bucket)
