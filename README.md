@@ -16,7 +16,7 @@ reasons:
   often, which is not good for a tool intended to be used for many
   years.
 - more features:
-  - output table in list mode uses <tab> separator
+  - output table in list mode uses TAB separator
   - better STDIN + pipe support
   - supports JSON output
   - supports more verbose tabular output
