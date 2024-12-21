@@ -49,6 +49,17 @@ type DbEntry struct {
 	Size      int
 }
 
+type BucketInfo struct {
+	Name string
+	Keys int
+	Size int
+}
+
+type DbInfo struct {
+	Buckets []BucketInfo
+	Path    string
+}
+
 // Post process an entry for list output.
 // Do NOT call it during write processing!
 func (entry *DbEntry) Normalize() {
@@ -77,7 +88,7 @@ type DbTag struct {
 const BucketData string = "data"
 
 func New(file string, bucket string, debug bool) (*DB, error) {
-  return &DB{Debug: debug, Dbfile: file, Bucket: bucket}, nil
+	return &DB{Debug: debug, Dbfile: file, Bucket: bucket}, nil
 }
 
 func (db *DB) Open() error {
@@ -370,4 +381,35 @@ func fileExists(filename string) bool {
 	}
 
 	return !info.IsDir()
+}
+
+func (db *DB) Info() (*DbInfo, error) {
+	if err := db.Open(); err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	info := &DbInfo{Path: db.Dbfile}
+
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		tx.ForEach(func(name []byte, bucket *bolt.Bucket) error {
+			binfo := BucketInfo{Name: string(name)}
+			err := bucket.ForEach(func(key, entry []byte) error {
+				binfo.Size += len(entry)
+				binfo.Keys++
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			info.Buckets = append(info.Buckets, binfo)
+			return nil
+
+		})
+		return nil
+
+	})
+	return info, err
 }

@@ -346,3 +346,26 @@ func Serve(conf *cfg.Config) *cobra.Command {
 
 	return cmd
 }
+
+func Info(conf *cfg.Config) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "info",
+		Short: "info",
+		Long:  `show info about database`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// errors at this stage do not cause the usage to be shown
+			cmd.SilenceUsage = true
+
+			info, err := conf.DB.Info()
+			if err != nil {
+				return err
+			}
+
+			return output.Info(os.Stdout, conf, info)
+		},
+	}
+
+	cmd.PersistentFlags().StringVarP(&conf.Listen, "listen", "l", "localhost:8787", "host:port")
+
+	return cmd
+}

@@ -26,6 +26,7 @@ import (
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
 	"golang.org/x/term"
+	//"github.com/alecthomas/repr"
 )
 
 func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEntry) error {
@@ -91,5 +92,16 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 		return fmt.Errorf("failed to write to file %s: %w", attr.File, err)
 	}
 
+	return nil
+}
+
+func Info(writer io.Writer, conf *cfg.Config, info *app.DbInfo) error {
+	// repr.Println(info)
+	fmt.Fprintf(writer, "Database: %s\n", info.Path)
+
+	for _, bucket := range info.Buckets {
+
+		fmt.Fprintf(writer, "Bucket: %s\n  Size: %d\n  Keys: %d\n\n", bucket.Name, bucket.Size, bucket.Keys)
+	}
 	return nil
 }
