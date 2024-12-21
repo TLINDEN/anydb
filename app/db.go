@@ -373,7 +373,7 @@ func (db *DB) Info() (*DbInfo, error) {
 	info := &DbInfo{Path: db.Dbfile}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
-		tx.ForEach(func(name []byte, bucket *bolt.Bucket) error {
+          err := tx.ForEach(func(name []byte, bucket *bolt.Bucket) error {
 			binfo := BucketInfo{Name: string(name)}
 			err := bucket.ForEach(func(key, entry []byte) error {
 				binfo.Size += len(entry)
@@ -389,6 +389,11 @@ func (db *DB) Info() (*DbInfo, error) {
 			return nil
 
 		})
+
+		if err != nil {
+			return err
+		}
+
 		return nil
 
 	})
