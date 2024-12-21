@@ -7,6 +7,7 @@ var Version string = "v0.0.4"
 type Config struct {
 	Debug      bool
 	Dbfile     string
+	Dbbucket     string
 	Template   string
 	Mode       string // wide, table, yaml, json
 	NoHeaders  bool

@@ -54,7 +54,7 @@ func Execute() {
 		Short: "anydb",
 		Long:  `A personal key value store`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			db, err := app.New(conf.Dbfile, conf.Debug)
+			db, err := app.New(conf.Dbfile, conf.Dbbucket, conf.Debug)
 			if err != nil {
 				return err
 			}
@@ -92,6 +92,8 @@ func Execute() {
 	rootCmd.PersistentFlags().BoolVarP(&conf.Debug, "debug", "d", false, "Enable debugging")
 	rootCmd.PersistentFlags().StringVarP(&conf.Dbfile, "dbfile", "f",
 		filepath.Join(home, ".config", "anydb", "default.db"), "DB file to use")
+	rootCmd.PersistentFlags().StringVarP(&conf.Dbbucket, "bucket", "b",
+        app.BucketData, "use other bucket (default: " + app.BucketData +")")
 
 	rootCmd.AddCommand(Set(&conf))
 	rootCmd.AddCommand(List(&conf))

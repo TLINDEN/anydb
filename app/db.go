@@ -34,6 +34,7 @@ const MaxValueWidth int = 60
 type DB struct {
 	Debug  bool
 	Dbfile string
+	Bucket string
 	DB     *bolt.DB
 }
 
@@ -75,8 +76,8 @@ type DbTag struct {
 
 const BucketData string = "data"
 
-func New(file string, debug bool) (*DB, error) {
-	return &DB{Debug: debug, Dbfile: file}, nil
+func New(file string, bucket string, debug bool) (*DB, error) {
+  return &DB{Debug: debug, Dbfile: file, Bucket: bucket}, nil
 }
 
 func (db *DB) Open() error {
@@ -114,7 +115,7 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
 
-		bucket := tx.Bucket([]byte(BucketData))
+		bucket := tx.Bucket([]byte(db.Bucket))
 		if bucket == nil {
 			return nil
 		}
@@ -182,7 +183,7 @@ func (db *DB) Set(attr *DbAttr) error {
 	// any  tags. if so,  we initialize  our update struct  with these
 	// tags unless it has new tags configured.
 	err := db.DB.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(BucketData))
+		bucket := tx.Bucket([]byte(db.Bucket))
 		if bucket == nil {
 			return nil
 		}
@@ -211,7 +212,7 @@ func (db *DB) Set(attr *DbAttr) error {
 
 	err = db.DB.Update(func(tx *bolt.Tx) error {
 		// insert data
-		bucket, err := tx.CreateBucketIfNotExists([]byte(BucketData))
+		bucket, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
 		if err != nil {
 			return fmt.Errorf("failed to create DB bucket: %w", err)
 		}
@@ -245,7 +246,7 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 	entry := DbEntry{}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(BucketData))
+		bucket := tx.Bucket([]byte(db.Bucket))
 		if bucket == nil {
 			return nil
 		}
@@ -277,7 +278,7 @@ func (db *DB) Del(attr *DbAttr) error {
 	defer db.Close()
 
 	err := db.DB.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(BucketData))
+		bucket := tx.Bucket([]byte(db.Bucket))
 
 		if bucket == nil {
 			return nil
@@ -324,7 +325,7 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 
 	err := db.DB.Update(func(tx *bolt.Tx) error {
 		// insert data
-		bucket, err := tx.CreateBucketIfNotExists([]byte(BucketData))
+		bucket, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
 		if err != nil {
 			return fmt.Errorf("failed to create bucket: %w", err)
 		}
