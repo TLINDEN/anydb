@@ -93,7 +93,7 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVarP(&conf.Dbfile, "dbfile", "f",
 		filepath.Join(home, ".config", "anydb", "default.db"), "DB file to use")
 	rootCmd.PersistentFlags().StringVarP(&conf.Dbbucket, "bucket", "b",
-        app.BucketData, "use other bucket (default: " + app.BucketData +")")
+		app.BucketData, "use other bucket (default: "+app.BucketData+")")
 
 	rootCmd.AddCommand(Set(&conf))
 	rootCmd.AddCommand(List(&conf))
@@ -103,6 +103,7 @@ func Execute() {
 	rootCmd.AddCommand(Import(&conf))
 	rootCmd.AddCommand(Serve(&conf))
 	rootCmd.AddCommand(Man(&conf))
+	rootCmd.AddCommand(Info(&conf))
 
 	err = rootCmd.Execute()
 	if err != nil {
