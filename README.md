@@ -145,6 +145,10 @@ curl localhost:8787/anydb/v1/foo
 # list keys
 curl localhost:8787/anydb/v1/
 
+# sometimes you need to know some details about the current database
+# add -d for more details
+anydb info
+
 # it comes with a manpage builtin
 anydb man
 ```

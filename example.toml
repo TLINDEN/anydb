@@ -1,0 +1,14 @@
+# defaults
+dbfile     = "~/.config/anydb/default.db"
+dbbucket   = "data"
+noheaders  = false
+nohumanize = false
+encrypt    = false
+listen     = "localhost:8787"
+
+# different setups for different buckets
+[buckets.data]
+encrypt = true
+
+[buckets.test]
+encrypt = false

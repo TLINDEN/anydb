@@ -104,10 +104,11 @@ func Info(writer io.Writer, conf *cfg.Config, info *app.DbInfo) error {
 		if conf.NoHumanize {
 			fmt.Fprintf(
 				writer,
-				"%19s: %s\n%19s: %d\n%19s: %d\n",
+				"%19s: %s\n%19s: %d\n%19s: %d\n%19s: %t\n",
 				"Bucket", bucket.Name,
 				"Size", bucket.Size,
-				"Keys", bucket.Keys)
+				"Keys", bucket.Keys,
+				"Encrypted", conf.Encrypt)
 		} else {
 			fmt.Fprintf(
 				writer,
@@ -120,7 +121,7 @@ func Info(writer io.Writer, conf *cfg.Config, info *app.DbInfo) error {
 		if conf.Debug {
 			val := reflect.ValueOf(&bucket.Stats).Elem()
 			for i := 0; i < val.NumField(); i++ {
-				fmt.Fprintf(writer, "%19s: %d\n", val.Type().Field(i).Name, val.Field(i))
+				fmt.Fprintf(writer, "%19s: %v\n", val.Type().Field(i).Name, val.Field(i))
 			}
 		}
 
