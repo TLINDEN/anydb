@@ -66,11 +66,11 @@ clean:
 	rm -rf $(tool) releases coverage.out
 
 test:
-	go test -v ./...
+	ANYDB_PASSWORD=test go test -v ./...
 
 singletest:
 	@echo "Call like this: ''make singletest TEST=TestPrepareColumns MOD=lib"
-	go test -run $(TEST) github.com/tlinden/anydb/$(MOD)
+	ANYDB_PASSWORD=test go test -run $(TEST) github.com/tlinden/anydb/$(MOD)
 
 cover-report:
 	go test ./... -cover -coverprofile=coverage.out
