@@ -279,7 +279,13 @@ func Import(conf *cfg.Config) *cobra.Command {
 			// errors at this stage do not cause the usage to be shown
 			cmd.SilenceUsage = true
 
-			return conf.DB.Import(&attr)
+			out, err := conf.DB.Import(&attr)
+			if err != nil {
+				return err
+			}
+
+			fmt.Print(out)
+			return nil
 		},
 	}
 

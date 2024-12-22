@@ -289,14 +289,14 @@ func (db *DB) Del(attr *DbAttr) error {
 	return err
 }
 
-func (db *DB) Import(attr *DbAttr) error {
+func (db *DB) Import(attr *DbAttr) (string, error) {
 	// open json file into attr.Val
 	if err := attr.GetFileValue(); err != nil {
-		return err
+		return "", err
 	}
 
 	if attr.Val == "" {
-		return errors.New("empty json file")
+		return "", errors.New("empty json file")
 	}
 
 	var entries DbEntries
@@ -304,21 +304,21 @@ func (db *DB) Import(attr *DbAttr) error {
 	newfile := db.Dbfile + now.Format("-02.01.2006T03:04.05")
 
 	if err := json.Unmarshal([]byte(attr.Val), &entries); err != nil {
-		return cleanError(newfile, fmt.Errorf("failed to unmarshal json: %w", err))
+		return "", cleanError(newfile, fmt.Errorf("failed to unmarshal json: %w", err))
 	}
 
 	if fileExists(db.Dbfile) {
 		// backup the old file
 		err := os.Rename(db.Dbfile, newfile)
 		if err != nil {
-			return fmt.Errorf("failed to rename file %s to %s: %w", db.Dbfile, newfile, err)
+			return "", fmt.Errorf("failed to rename file %s to %s: %w", db.Dbfile, newfile, err)
 		}
 
 	}
 
 	// should now be a new db file
 	if err := db.Open(); err != nil {
-		return cleanError(newfile, err)
+		return "", cleanError(newfile, err)
 	}
 	defer db.Close()
 
@@ -345,28 +345,9 @@ func (db *DB) Import(attr *DbAttr) error {
 	})
 
 	if err != nil {
-		return cleanError(newfile, err)
+		return "", cleanError(newfile, err)
 	}
 
-	fmt.Printf("backed up database file to %s\n", newfile)
-	fmt.Printf("imported %d database entries\n", len(entries))
-
-	return nil
-}
-
-func cleanError(file string, err error) error {
-	// remove given [backup] file and forward the given error
-	os.Remove(file)
-	return err
-}
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-
-	if err != nil {
-		// return false on any error
-		return false
-	}
-
-	return !info.IsDir()
+	return fmt.Sprintf("backed up database file to %s\nimported %d database entries\n",
+		newfile, len(entries)), nil
 }
