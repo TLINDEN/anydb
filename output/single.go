@@ -21,8 +21,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strings"
 
+	"github.com/dustin/go-humanize"
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
 	"golang.org/x/term"
@@ -96,12 +98,33 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 }
 
 func Info(writer io.Writer, conf *cfg.Config, info *app.DbInfo) error {
-	// repr.Println(info)
 	fmt.Fprintf(writer, "Database: %s\n", info.Path)
 
 	for _, bucket := range info.Buckets {
+		if conf.NoHumanize {
+			fmt.Fprintf(
+				writer,
+				"%19s: %s\n%19s: %d\n%19s: %d\n",
+				"Bucket", bucket.Name,
+				"Size", bucket.Size,
+				"Keys", bucket.Keys)
+		} else {
+			fmt.Fprintf(
+				writer,
+				"%19s: %s\n%19s: %s\n%19s: %d\n",
+				"Bucket", bucket.Name,
+				"Size", humanize.Bytes(uint64(bucket.Size)),
+				"Keys", bucket.Keys)
+		}
 
-		fmt.Fprintf(writer, "Bucket: %s\n  Size: %d\n  Keys: %d\n\n", bucket.Name, bucket.Size, bucket.Keys)
+		if conf.Debug {
+			val := reflect.ValueOf(&bucket.Stats).Elem()
+			for i := 0; i < val.NumField(); i++ {
+				fmt.Fprintf(writer, "%19s: %d\n", val.Type().Field(i).Name, val.Field(i))
+			}
+		}
+
+		fmt.Fprintln(writer)
 	}
 	return nil
 }

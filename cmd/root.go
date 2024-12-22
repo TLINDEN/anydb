@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/alecthomas/repr"
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
@@ -45,9 +46,21 @@ func completion(cmd *cobra.Command, mode string) error {
 func Execute() {
 	var (
 		conf           cfg.Config
+		configfile     string
 		ShowVersion    bool
 		ShowCompletion string
 	)
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	SearchConfigs := []string{
+		filepath.Join(home, ".config", "anydb", "anydb.toml"),
+		filepath.Join(home, ".anydb.toml"),
+		"anydb.toml",
+	}
 
 	var rootCmd = &cobra.Command{
 		Use:   "anydb <command> [options]",
@@ -60,6 +73,21 @@ func Execute() {
 			}
 
 			conf.DB = db
+
+			var configs []string
+			if configfile != "" {
+				configs = []string{configfile}
+			} else {
+				configs = SearchConfigs
+			}
+
+			if err := conf.GetConfig(configs); err != nil {
+				return err
+			}
+
+			if conf.Debug {
+				repr.Println(conf)
+			}
 
 			return nil
 		},
@@ -82,11 +110,6 @@ func Execute() {
 		},
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-
 	// options
 	rootCmd.PersistentFlags().BoolVarP(&ShowVersion, "version", "v", false, "Print program version")
 	rootCmd.PersistentFlags().BoolVarP(&conf.Debug, "debug", "d", false, "Enable debugging")
@@ -94,6 +117,7 @@ func Execute() {
 		filepath.Join(home, ".config", "anydb", "default.db"), "DB file to use")
 	rootCmd.PersistentFlags().StringVarP(&conf.Dbbucket, "bucket", "b",
 		app.BucketData, "use other bucket (default: "+app.BucketData+")")
+	rootCmd.PersistentFlags().StringVarP(&configfile, "config", "c", "", "toml config file")
 
 	rootCmd.AddCommand(Set(&conf))
 	rootCmd.AddCommand(List(&conf))
