@@ -1,3 +1,2 @@
 - repl
 - mime-type => exec app + value
-- [edit command](https://github.com/TLINDEN/rpnc/blob/master/command.go#L249)

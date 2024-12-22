@@ -76,6 +76,13 @@ func (entry *DbEntry) Normalize() {
 		entry.Size = len(entry.Bin)
 	}
 
+	if strings.Contains(entry.Value, "\n") {
+		parts := strings.Split(entry.Value, "\n")
+		if len(parts) > 0 {
+			entry.Value = parts[0]
+		}
+	}
+
 	if len(entry.Value) > MaxValueWidth {
 		entry.Value = entry.Value[0:MaxValueWidth] + "..."
 	}

@@ -119,15 +119,23 @@ func Execute() {
 		app.BucketData, "use other bucket (default: "+app.BucketData+")")
 	rootCmd.PersistentFlags().StringVarP(&configfile, "config", "c", "", "toml config file")
 
+	// CRUD
 	rootCmd.AddCommand(Set(&conf))
 	rootCmd.AddCommand(List(&conf))
 	rootCmd.AddCommand(Get(&conf))
 	rootCmd.AddCommand(Del(&conf))
+
+	// backup
 	rootCmd.AddCommand(Export(&conf))
 	rootCmd.AddCommand(Import(&conf))
+
+	// REST API
 	rootCmd.AddCommand(Serve(&conf))
+
+	// auxiliary
 	rootCmd.AddCommand(Man(&conf))
 	rootCmd.AddCommand(Info(&conf))
+	rootCmd.AddCommand(Edit(&conf))
 
 	err = rootCmd.Execute()
 	if err != nil {

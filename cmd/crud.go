@@ -17,11 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 	"unicode/utf8"
 
@@ -29,7 +26,6 @@ import (
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
 	"github.com/tlinden/anydb/output"
-	"github.com/tlinden/anydb/rest"
 )
 
 func Set(conf *cfg.Config) *cobra.Command {
@@ -185,38 +181,6 @@ func Del(conf *cfg.Config) *cobra.Command {
 	return cmd
 }
 
-func Export(conf *cfg.Config) *cobra.Command {
-	var (
-		attr app.DbAttr
-	)
-
-	var cmd = &cobra.Command{
-		Use:   "export [-o <json filename>]",
-		Short: "Export database to json",
-		Long:  `Export database to json`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// errors at this stage do not cause the usage to be shown
-			cmd.SilenceUsage = true
-
-			conf.Mode = "json"
-
-			entries, err := conf.DB.List(&attr)
-			if err != nil {
-				return err
-			}
-
-			return output.WriteJSON(&attr, conf, entries)
-		},
-	}
-
-	cmd.PersistentFlags().StringVarP(&attr.File, "output", "o", "", "output to file")
-
-	cmd.Aliases = append(cmd.Aliases, "dump")
-	cmd.Aliases = append(cmd.Aliases, "backup")
-
-	return cmd
-}
-
 func List(conf *cfg.Config) *cobra.Command {
 	var (
 		attr app.DbAttr
@@ -262,116 +226,6 @@ func List(conf *cfg.Config) *cobra.Command {
 
 	cmd.Aliases = append(cmd.Aliases, "/")
 	cmd.Aliases = append(cmd.Aliases, "ls")
-
-	return cmd
-}
-
-func Import(conf *cfg.Config) *cobra.Command {
-	var (
-		attr app.DbAttr
-	)
-
-	var cmd = &cobra.Command{
-		Use:   "import [<json file>]",
-		Short: "Import database dump",
-		Long:  `Import database dump`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// errors at this stage do not cause the usage to be shown
-			cmd.SilenceUsage = true
-
-			out, err := conf.DB.Import(&attr)
-			if err != nil {
-				return err
-			}
-
-			fmt.Print(out)
-			return nil
-		},
-	}
-
-	cmd.PersistentFlags().StringVarP(&attr.File, "file", "r", "", "Filename or - for STDIN")
-	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")
-
-	cmd.Aliases = append(cmd.Aliases, "add")
-	cmd.Aliases = append(cmd.Aliases, "s")
-	cmd.Aliases = append(cmd.Aliases, "+")
-
-	return cmd
-}
-
-func Help(conf *cfg.Config) *cobra.Command {
-	return nil
-}
-
-func Man(conf *cfg.Config) *cobra.Command {
-	var cmd = &cobra.Command{
-		Use:   "man",
-		Short: "show manual page",
-		Long:  `show manual page`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// errors at this stage do not cause the usage to be shown
-			cmd.SilenceUsage = true
-
-			man := exec.Command("less", "-")
-
-			var b bytes.Buffer
-
-			b.WriteString(manpage)
-
-			man.Stdout = os.Stdout
-			man.Stdin = &b
-			man.Stderr = os.Stderr
-
-			err := man.Run()
-
-			if err != nil {
-				return fmt.Errorf("failed to execute 'less': %w", err)
-			}
-
-			return nil
-		},
-	}
-
-	return cmd
-}
-
-func Serve(conf *cfg.Config) *cobra.Command {
-	var cmd = &cobra.Command{
-		Use:   "serve [-l host:port]",
-		Short: "run REST API listener",
-		Long:  `run REST API listener`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// errors at this stage do not cause the usage to be shown
-			cmd.SilenceUsage = true
-
-			return rest.Runserver(conf, nil)
-		},
-	}
-
-	cmd.PersistentFlags().StringVarP(&conf.Listen, "listen", "l", "localhost:8787", "host:port")
-
-	return cmd
-}
-
-func Info(conf *cfg.Config) *cobra.Command {
-	var cmd = &cobra.Command{
-		Use:   "info",
-		Short: "info",
-		Long:  `show info about database`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// errors at this stage do not cause the usage to be shown
-			cmd.SilenceUsage = true
-
-			info, err := conf.DB.Info()
-			if err != nil {
-				return err
-			}
-
-			return output.Info(os.Stdout, conf, info)
-		},
-	}
-
-	cmd.PersistentFlags().BoolVarP(&conf.NoHumanize, "no-human", "N", false, "do not translate to human readable values")
 
 	return cmd
 }
