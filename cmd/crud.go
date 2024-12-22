@@ -65,7 +65,7 @@ func Set(conf *cfg.Config) *cobra.Command {
 
 			// encrypt?
 			if conf.Encrypt {
-				pass, err := app.AskForPassword()
+				pass, err := getPassword()
 				if err != nil {
 					return err
 				}
@@ -118,7 +118,7 @@ func Get(conf *cfg.Config) *cobra.Command {
 			}
 
 			if entry.Encrypted {
-				pass, err := app.AskForPassword()
+				pass, err := getPassword()
 				if err != nil {
 					return err
 				}
@@ -371,7 +371,26 @@ func Info(conf *cfg.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&conf.Listen, "listen", "l", "localhost:8787", "host:port")
+	cmd.PersistentFlags().BoolVarP(&conf.NoHumanize, "no-human", "N", false, "do not translate to human readable values")
 
 	return cmd
+}
+
+func getPassword() ([]byte, error) {
+	var pass []byte
+
+	envpass := os.Getenv("ANYDB_PASSWORD")
+
+	if envpass == "" {
+		readpass, err := app.AskForPassword()
+		if err != nil {
+			return nil, err
+		}
+
+		pass = readpass
+	} else {
+		pass = []byte(envpass)
+	}
+
+	return pass, nil
 }

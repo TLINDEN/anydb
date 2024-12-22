@@ -1,7 +1,3 @@
 - repl
 - mime-type => exec app + value
-- custom buckets (like skate: key@bucket or key+bucket)
-- encryption per bucket, one key for all entries (in that bucket)
-- `-b bucket`, use B for encrypted bucke?
 - [edit command](https://github.com/TLINDEN/rpnc/blob/master/command.go#L249)
-- env var for password 

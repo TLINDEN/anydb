@@ -95,8 +95,28 @@ anydb import -r backup.json
 
 # you can encrypt entries. anydb asks for a passphrase
 # and will do the same when you retrieve the key using the
-# get command.
+# get command. anydb will ask you interactively for a password
 anydb set mypassword -e
+
+# but you can provide it via an environment variable too
+ANYDB_PASSWORD=foo anydb set -e secretkey blahblah
+
+# too tiresome to add -e every time you add an entry?
+# use a per bucket config
+cat ~/.config/anydb/anydb.toml
+[buckets.data]
+encrypt = true
+anydb set foo bar # will be encrypted
+
+# speaking of buckets, you can use different buckets
+anydb -b test set foo bar
+
+# and speaking of configs, you can place a config file at these places:
+# ~/.config/anydb/anydb.toml
+# ~/.anydb.toml
+# anydb.toml (current directory)
+# or specify one using -c <filename>
+# look at example.toml
 
 # using template output mode you can freely design how to print stuff
 # here, we print the values in CSV format ONLY if they have some tag

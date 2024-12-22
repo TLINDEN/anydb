@@ -50,9 +50,11 @@ type DbEntry struct {
 }
 
 type BucketInfo struct {
-	Name string
-	Keys int
-	Size int
+	Name     string
+	Keys     int
+	Size     int
+	Sequence uint64
+	Stats    bolt.BucketStats
 }
 
 type DbInfo struct {
@@ -264,6 +266,7 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 
 		jsonentry := bucket.Get([]byte(attr.Key))
 		if jsonentry == nil {
+			// FIXME: shall we return a key not found error?
 			return nil
 		}
 
@@ -373,16 +376,23 @@ func (db *DB) Info() (*DbInfo, error) {
 	info := &DbInfo{Path: db.Dbfile}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
-          err := tx.ForEach(func(name []byte, bucket *bolt.Bucket) error {
-			binfo := BucketInfo{Name: string(name)}
+		err := tx.ForEach(func(name []byte, bucket *bolt.Bucket) error {
+			stats := bucket.Stats()
+
+			binfo := BucketInfo{
+				Name:     string(name),
+				Sequence: bucket.Sequence(),
+				Keys:     stats.KeyN,
+				Stats:    bucket.Stats(),
+			}
+
 			err := bucket.ForEach(func(key, entry []byte) error {
-				binfo.Size += len(entry)
-				binfo.Keys++
+				binfo.Size += len(entry) + len(key)
 
 				return nil
 			})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read keys: %w", err)
 			}
 
 			info.Buckets = append(info.Buckets, binfo)
@@ -391,11 +401,12 @@ func (db *DB) Info() (*DbInfo, error) {
 		})
 
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read from DB: %w", err)
 		}
 
 		return nil
 
 	})
+
 	return info, err
 }
