@@ -145,6 +145,14 @@ curl localhost:8787/anydb/v1/foo
 # list keys
 curl localhost:8787/anydb/v1/
 
+# as you might correctly suspect you can store multi-line values or
+# the content of text files. but what to do if you want to change it?
+# here's one way:
+anydb get contract24 > file.txt && vi file.txt && anydb set contract24 -r file.txt
+
+# annoying. better do this
+anydb edit contract24 
+
 # sometimes you need to know some details about the current database
 # add -d for more details
 anydb info

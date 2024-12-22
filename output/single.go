@@ -71,15 +71,25 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 }
 
 func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEntry) error {
-	fd, err := os.OpenFile(attr.File, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return fmt.Errorf("failed to open file %s for writing: %w", attr.File, err)
+	var fileHandle *os.File
+	var err error
+
+	if attr.File == "-" {
+		fileHandle = os.Stdout
+	} else {
+
+		fd, err := os.OpenFile(attr.File, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+		if err != nil {
+			return fmt.Errorf("failed to open file %s for writing: %w", attr.File, err)
+		}
+		defer fd.Close()
+
+		fileHandle = fd
 	}
-	defer fd.Close()
 
 	if len(entry.Bin) > 0 {
 		// binary file content
-		_, err = fd.Write(entry.Bin)
+		_, err = fileHandle.Write(entry.Bin)
 	} else {
 		val := entry.Value
 		if !strings.HasSuffix(val, "\n") {
@@ -87,7 +97,7 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 			val += "\n"
 		}
 
-		_, err = fd.Write([]byte(val))
+		_, err = fileHandle.Write([]byte(val))
 	}
 
 	if err != nil {
