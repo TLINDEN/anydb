@@ -26,23 +26,24 @@ import (
 	"github.com/tlinden/anydb/common"
 )
 
-var Version string = "v0.0.6"
+var Version string = "v0.0.7"
 
 type BucketConfig struct {
 	Encrypt bool
 }
 
 type Config struct {
-	Debug      bool
-	Dbfile     string
-	Dbbucket   string
-	Template   string
-	Mode       string // wide, table, yaml, json
-	NoHeaders  bool
-	NoHumanize bool
-	Encrypt    bool // one entry
-	Listen     string
-	Buckets    map[string]BucketConfig // config file only
+	Debug           bool
+	Dbfile          string
+	Dbbucket        string
+	Template        string
+	Mode            string // wide, table, yaml, json
+	NoHeaders       bool
+	NoHumanize      bool
+	Encrypt         bool // one entry
+	CaseInsensitive bool
+	Listen          string
+	Buckets         map[string]BucketConfig // config file only
 
 	Tags []string // internal
 	DB   *app.DB  // internal

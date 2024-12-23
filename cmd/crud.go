@@ -188,7 +188,7 @@ func List(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>]",
+		Use:   "list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [-i]",
 		Short: "List database contents",
 		Long:  `List database contents`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -196,7 +196,11 @@ func List(conf *cfg.Config) *cobra.Command {
 			cmd.SilenceUsage = true
 
 			if len(args) > 0 {
-				attr.Args = args
+				if conf.CaseInsensitive {
+					attr.Args = []string{"(?i)" + args[0]}
+				} else {
+					attr.Args = args
+				}
 			}
 
 			// turn comma list into slice, if needed
@@ -222,6 +226,7 @@ func List(conf *cfg.Config) *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&wide, "wide-output", "l", false, "output mode: wide")
 	cmd.PersistentFlags().BoolVarP(&conf.NoHeaders, "no-headers", "n", false, "omit headers in tables")
 	cmd.PersistentFlags().BoolVarP(&conf.NoHumanize, "no-human", "N", false, "do not translate to human readable values")
+	cmd.PersistentFlags().BoolVarP(&conf.CaseInsensitive, "case-insensitive", "i", false, "filter case insensitive")
 	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")
 
 	cmd.Aliases = append(cmd.Aliases, "/")

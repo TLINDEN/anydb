@@ -206,14 +206,16 @@ The B<list> subcommand displays a list of all database entries.
 Usage:
 
     Usage:
-      anydb list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [flags]
+      anydb list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [-i] [flags]
     
     Aliases:
       list, /, ls
     
     Flags:
+      -i, --case-insensitive   filter case insensitive
       -h, --help               help for list
-      -m, --mode string        output format (table|wide|json|template), wide is a verbose table. (default 'table')
+      -m, --mode string        output format (table|wide|json|template),
+                               wide is a verbose table. (default 'table')
       -n, --no-headers         omit headers in tables
       -N, --no-human           do not translate to human readable values
       -t, --tags stringArray   tags, multiple allowed
@@ -249,6 +251,8 @@ about the syntax, refer to
 L<https://github.com/google/re2/wiki/Syntax>. Please note, that this
 regexp dialect is not PCRE compatible, but supports most of its
 features.
+
+If you want to search case insensitive, add the option C<-i>.
 
 You can - as with the B<get> command - use other output modes. The
 default mode is "table". The "wide" mode is, as already mentioned, a

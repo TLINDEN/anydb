@@ -18,6 +18,9 @@
 # simple entry
 exec anydb -f test.db set foo bar
 
+# single entry uc()
+exec anydb -f test.db set MUCHAS gracias
+
 # entry with tags
 exec anydb -f test.db set color grey -t flower,plant
 
@@ -36,6 +39,10 @@ exec anydb -f test.db list -t flower
 # list with filter
 exec anydb -f test.db list b.r
 stdout bar
+
+# list with -i filter
+exec anydb -f test.db list -i mucha
+stdout MUCHA
 
 # get single entry
 exec anydb -f test.db get color
