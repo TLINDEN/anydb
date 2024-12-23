@@ -27,6 +27,8 @@ reasons:
   - templates for custom output for maximum flexibility
   - includes a tiny web server, which serves a restful API
 
+And I wrote a very similar [tool](https://www.daemon.de/projects/dbtool/) 24 years ago and wanted to do it again wit go.
+
 **anydb** can do all the things you can do with skate:
 
 ```shell
