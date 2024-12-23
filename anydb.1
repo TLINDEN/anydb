@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "ANYDB 1"
-.TH ANYDB 1 "2024-12-22" "1" "User Commands"
+.TH ANYDB 1 "2024-12-23" "1" "User Commands"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -151,14 +151,20 @@ anydb \- a personal key value store
 \&    Available Commands:
 \&      completion  Generate the autocompletion script for the specified shell
 \&      del         Delete key
+\&      edit        Edit a key
 \&      export      Export database to json
 \&      get         Retrieve value for a key
 \&      help        Help about any command
 \&      import      Import database dump
+\&      info        info
 \&      list        List database contents
+\&      man         show manual page
+\&      serve       run REST API listener
 \&      set         Insert key/value pair
 \&    
 \&    Flags:
+\&      \-b, \-\-bucket string   use other bucket (default: data) (default "data")
+\&      \-c, \-\-config string   toml config file
 \&      \-f, \-\-dbfile string   DB file to use (default "/home/scip/.config/anydb/default.db")
 \&      \-d, \-\-debug           Enable debugging
 \&      \-h, \-\-help            help for anydb
@@ -168,9 +174,559 @@ anydb \- a personal key value store
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Anydb is a simple to use commandline tool to store anything you'd
-like, even binary files etc. It uses a key/value store (bbolt) in your
-home directory.
+Anydb is a  commandline personal key value store, it  is simple to use
+and  can be  used  to store  anything you'd  like,  even binary  files
+etc. It uses a key/value store (bbolt) in your home directory.
+.PP
+The tool provides a number of subcommands to use it, there are global
+options and each subcommand has its own set of options.
+.SH "GLOBAL OPTIONS"
+.IX Header "GLOBAL OPTIONS"
+.ie n .IP """\-f, \-\-dbfile filename""" 4
+.el .IP "\f(CW\-f, \-\-dbfile filename\fR" 4
+.IX Item "-f, --dbfile filename"
+The default location of your databas is
+\&\f(CW\*(C`$HOME/.config/anydb/default.db\*(C'\fR. You can change this with the \f(CW\*(C`\-f\*(C'\fR
+option.
+.ie n .IP """\-b, \-\-bucket name""" 4
+.el .IP "\f(CW\-b, \-\-bucket name\fR" 4
+.IX Item "-b, --bucket name"
+Data in a bbolt key-value-store are managed in so called
+buckets. These are kind of namespaces, where each key must be
+unique. However, a database may contain more than one bucket.
+.Sp
+By default anydb uses a bucket named \*(L"data\*(R", but you can change this
+using the option \f(CW\*(C`\-b\*(C'\fR.
+.Sp
+Buckets can be configured to always encrypt values, see \s-1ENCRYTPTION\s0.
+.ie n .IP """\-c, \-\-config filename""" 4
+.el .IP "\f(CW\-c, \-\-config filename\fR" 4
+.IX Item "-c, --config filename"
+Under normal circumstances you don't need a configuration file. But if
+you want, you can provide one using the option \f(CW\*(C`\-c\*(C'\fR.
+.Sp
+Anydb looks for a couple of default locations for a config file. You
+only need this option if you want to supply a configuration on a
+non-standard location. See \s-1CONFIGURATION\s0 for more details.
+.ie n .IP """\-d, \-\-debug""" 4
+.el .IP "\f(CW\-d, \-\-debug\fR" 4
+.IX Item "-d, --debug"
+Enable debug output.
+.ie n .IP """\-h, \-\-help""" 4
+.el .IP "\f(CW\-h, \-\-help\fR" 4
+.IX Item "-h, --help"
+Show the usage of anydb.
+.ie n .IP """\-v, \-\-version""" 4
+.el .IP "\f(CW\-v, \-\-version\fR" 4
+.IX Item "-v, --version"
+Show the program version.
+.PP
+All of these options can be used with subcommands as well.
+.SH "SUBCOMMANDS"
+.IX Header "SUBCOMMANDS"
+.SS "completion"
+.IX Subsection "completion"
+The \fBcompletion\fR command can be used to setup completion for
+anydb. Just put something like this into your shell's configuration
+file:
+.PP
+.Vb 1
+\&    source <(anydb completion bash)
+.Ve
+.PP
+If you use another shell, specify it instead of bash, of course.
+.SS "set"
+.IX Subsection "set"
+The \fBset\fR command is being used to insert or update a key-value pair.
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb set <key> [<value> | \-r <file>] [\-t <tag>] [flags]
+\&    
+\&    Aliases:
+\&      set, add, s, +
+\&    
+\&    Flags:
+\&      \-e, \-\-encrypt            encrypt value
+\&      \-r, \-\-file string        Filename or \- for STDIN
+\&      \-h, \-\-help               help for set
+\&      \-t, \-\-tags tag,tag,...   tags, multiple allowed
+.Ve
+.PP
+The standard way to insert a new entry is really simple:
+.PP
+.Vb 1
+\&    anydb set key value
+.Ve
+.PP
+If you don't specify a value, anydb expects you to feed it some data
+via \s-1STDIN.\s0 For example:
+.PP
+.Vb 1
+\&    anydb set key < file
+.Ve
+.PP
+You might as well specify a file directly using the \f(CW\*(C`\-f\*(C'\fR option:
+.PP
+.Vb 1
+\&    anydb set key \-f file
+.Ve
+.PP
+Values can be encrypted using \fBChaCha20Poly1305\fR when you specify the
+\&\f(CW\*(C`\-e\*(C'\fR option. Anydb will ask you interactively for a passphrase. You
+might as well provide the passphrase using the environment variable
+\&\f(CW\*(C`ANYDB_PASSWORD\*(C'\fR. To encrypt the value, a cryptographically secure
+key will be derived from the passphrase using the ArgonID2
+algorithm. Each value can be encrypted with another passphrase. So,
+the database itself is not encrypted, just the values.
+.PP
+You can supply tags by using the option \f(CW\*(C`\-t\*(C'\fR. Multiple tags can be
+provided either by separating them with a comma or by using multiple
+\&\f(CW\*(C`\-t\*(C'\fR parameters:
+.PP
+.Vb 2
+\&    anydb set key value \-t tag1,tag2
+\&    anydb set key value \-t tag1 \-t tag2
+.Ve
+.PP
+You can later filter entries by tag or by a combination of tags.
+.PP
+To edit or modify an entry, just use the \fBset\fR command with the same
+key, the value in the database will be overwritten with the new
+value. An alternative option is the \fBedit\fR command, see below.
+.SS "get"
+.IX Subsection "get"
+To retrieve the value of a key, use the \fBget\fR subcommand.
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb get  <key> [\-o <file>] [\-m <mode>] [\-n \-N] [\-T <tpl>] [flags]
+\&    
+\&    Aliases:
+\&      get, show, g, .
+\&    
+\&    Flags:
+\&      \-h, \-\-help              help for get
+\&      \-m, \-\-mode string       output format (simple|wide|json|template) (default \*(Aqsimple\*(Aq)
+\&      \-n, \-\-no\-headers        omit headers in tables
+\&      \-N, \-\-no\-human          do not translate to human readable values
+\&      \-o, \-\-output string     output value to file (ignores \-m)
+\&      \-T, \-\-template string   go template for \*(Aq\-m template\*(Aq
+.Ve
+.PP
+In its simplest form you just call the \fBget\fR subcommand with the key
+you want to have the value for. The value is being printed to \s-1STDOUT\s0
+by default:
+.PP
+.Vb 1
+\&    anydb get key
+.Ve
+.PP
+If the  value is binary  content, it will  not just being  printed. In
+those cases you need to either redirect  output into a file or use the
+option \f(CW\*(C`\-o\*(C'\fR to write to a file:
+.PP
+.Vb 2
+\&    anydb get key > file
+\&    anydb get key \-o file
+.Ve
+.PP
+If the value is encrypted, you will be asked for the passphrase to
+decrypt it. If the environment variable \f(CW\*(C`ANYDB_PASSWORD\*(C'\fR is set, its
+value will be used instead.
+.PP
+There are different output modes you  can choos from: simple, wide and
+json. The \*(L"simple\*(R"  mode is the default one, it  just prints the value
+as is. The \*(L"wide\*(R" mode prints  a tabular output similar to the \fBlist\fR
+subcommand, see  there for more  details. The options \f(CW\*(C`\-n\*(C'\fR  and \f(CW\*(C`\-N\*(C'\fR
+have the same  meaning as in the list command.  The \*(L"json\*(R" mode prints
+the raw  \s-1JSON\s0 representation of  the whole database  entry. Decryption
+will only take place in \*(L"simple\*(R"  and \*(L"json\*(R" mode. The \*(L"template\*(R" mode
+provides  the   most  flexibily,  it   is  detailed  in   the  section
+\&\s-1TEMPLATES\s0.
+.SS "list"
+.IX Subsection "list"
+The \fBlist\fR subcommand displays a list of all database entries.
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb list  [<filter\-regex>] [\-t <tag>] [\-m <mode>] [\-n \-N] [\-T <tpl>] [flags]
+\&    
+\&    Aliases:
+\&      list, /, ls
+\&    
+\&    Flags:
+\&      \-h, \-\-help               help for list
+\&      \-m, \-\-mode string        output format (table|wide|json|template), wide is a verbose table. (default \*(Aqtable\*(Aq)
+\&      \-n, \-\-no\-headers         omit headers in tables
+\&      \-N, \-\-no\-human           do not translate to human readable values
+\&      \-t, \-\-tags stringArray   tags, multiple allowed
+\&      \-T, \-\-template string    go template for \*(Aq\-m template\*(Aq
+\&      \-l, \-\-wide\-output        output mode: wide
+.Ve
+.PP
+In its simplest form \- without any options \- , the \fBlist\fR command
+just prints all keys with their values to \s-1STDOUT.\s0 Values are being
+truncated to maximum of 60 characters, that is, multiline values are
+not completely shown in order to keep the tabular view readable.
+.PP
+To get more informations about each entry, use the \f(CW\*(C`\-o wide\*(C'\fR or \f(CW\*(C`\-l\*(C'\fR
+option.  In addition  to  the  key and  value  also  the size,  update
+timestamp and tags will be printed. Time and size values are converted
+into a  human readable form, you  can suppress this behavior  with the
+\&\f(CW\*(C`\-N\*(C'\fR option. You may omit the headers using the option \f(CW\*(C`\-n\*(C'\fR
+.PP
+Sometimes you might want to filter the list of entries. Either because
+your database grew too large or because you're searching for
+something. In that case you have two options: You may supply one or
+more tags or provide a filter regexp. To filter by tag, do:
+.PP
+.Vb 3
+\&    anydb list \-t tag1
+\&    anydb list \-t tag1,tag2
+\&    anydb list \-t tag1 \-t tag2
+.Ve
+.PP
+To filter using a regular expression, do:
+.PP
+.Vb 1
+\&   anydb list "foo.*bar"
+.Ve
+.PP
+Regular expressions follow the golang \fBre2\fR syntax. For more details
+about the syntax, refer to
+<https://github.com/google/re2/wiki/Syntax>. Please note, that this
+regexp dialect is not \s-1PCRE\s0 compatible, but supports most of its
+features.
+.PP
+You can \- as with the \fBget\fR command \- use other output modes. The
+default mode is \*(L"table\*(R". The \*(L"wide\*(R" mode is, as already mentioned, a
+more detailed table. Also supported is \*(L"json\*(R" mode and \*(L"template\*(R"
+mode. For details about using templates see \s-1TEMPLATES\s0.
+.SS "del"
+.IX Subsection "del"
+Use the \fBdel\fR command to delete database entries.
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb del <key> [flags]
+\&    
+\&    Aliases:
+\&      del, d, rm
+\&    
+\&    Flags:
+\&      \-h, \-\-help   help for del
+.Ve
+.PP
+The subcommand  \fBdel\fR does not  provide any further options,  it just
+deletes the entry referred to by the given key. No questions are being
+asked.
+.SS "edit"
+.IX Subsection "edit"
+The \fBedit\fR command makes it easier to modify larger entries.
+.PP
+Usage:
+.PP
+.Vb 2
+\&   Usage:
+\&      anydb edit <key> [flags]
+\&    
+\&    Aliases:
+\&      edit, modify, mod, ed, vi
+\&    
+\&    Flags:
+\&      \-h, \-\-help   help for edit
+.Ve
+.PP
+The subcommand  \fBedit\fR does not  provide any further options. It
+works like this:
+.IP "1. Write the value info a temporary file." 4
+.IX Item "1. Write the value info a temporary file."
+.PD 0
+.IP "2. Execute the editor (which one, see below!) with that file." 4
+.IX Item "2. Execute the editor (which one, see below!) with that file."
+.IP "3. Now you can edit the file and save+close it when done." 4
+.IX Item "3. Now you can edit the file and save+close it when done."
+.IP "4. Anydb picks up the file and if the content has changed, puts its value into the \s-1DB.\s0" 4
+.IX Item "4. Anydb picks up the file and if the content has changed, puts its value into the DB."
+.PD
+.PP
+By default anydb executes the \f(CW\*(C`vi\*(C'\fR command. You can modify this
+behavior by setting the environment variable \f(CW\*(C`EDITOR\*(C'\fR appropriately.
+.PP
+Please note, that this does not work with binary content!
+.SS "export"
+.IX Subsection "export"
+Since the bbold database file is not portable across platforms (it is
+bound to the endianess of the \s-1CPU\s0 it was being created on), you might
+want to create a backup file of your database. You can do this with
+the \fBexport\fR subcommand.
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb export [\-o <json filename>] [flags]
+\&    
+\&    Aliases:
+\&      export, dump, backup
+\&    
+\&    Flags:
+\&      \-h, \-\-help            help for export
+\&      \-o, \-\-output string   output to file
+.Ve
+.PP
+The database dump is a \s-1JSON\s0 representation of the whole database and
+will be printed to \s-1STDOUT\s0 by default. Redirect it to a file or use the
+\&\f(CW\*(C`\-o\*(C'\fR option:
+.PP
+.Vb 2
+\&    anydb export > dump.json
+\&    anydb export \-o dump.json
+.Ve
+.PP
+Please note, that encrypted values will not be decrypted. This might
+change in a future version of anydb.
+.SS "import"
+.IX Subsection "import"
+The \fBimport\fR subcommand can be used to restore a database from a \s-1JSON\s0
+dump.
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb import [<json file>] [flags]
+\&    
+\&    Aliases:
+\&      import, restore
+\&    
+\&    Flags:
+\&      \-r, \-\-file string        Filename or \- for STDIN
+\&      \-h, \-\-help               help for import
+\&      \-t, \-\-tags stringArray   tags, multiple allowed
+.Ve
+.PP
+By default the \f(CW\*(C`import\*(C'\fR subcommand reads the \s-1JSON\s0 contents from
+\&\s-1STDIN.\s0 You might pipe the dump into it or use the option \f(CW\*(C`\-r\*(C'\fR:
+.PP
+.Vb 3
+\&    anydb import < dump.json
+\&    anydb import \-r dump.json
+\&    cat dump.json | anydb import
+.Ve
+.PP
+If there is already a database, it will be saved by appending a
+timestamp and a new database with the contents of the dump will be
+created.
+.SS "serve"
+.IX Subsection "serve"
+Anydb provides a RESTful \s-1API,\s0 which you can use to manage the database
+from somewhere  else. The \s-1API\s0  does not provide any  authentication or
+any other security measures, so better only use it on localhost.
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb serve [\-l host:port] [flags]
+\&    
+\&    Flags:
+\&      \-h, \-\-help            help for serve
+\&      \-l, \-\-listen string   host:port (default "localhost:8787")
+.Ve
+.PP
+To start the listener, just execute the \fBserve\fR subcommand. You can
+tweak the ip address and tcp port using the \f(CW\*(C`\-l\*(C'\fR option. The listener
+will not fork and run in the foreground. Logs are being printed to
+\&\s-1STDOUT\s0 as long as the listener runs.
+.PP
+For more details about the \s-1API,\s0 please see the \*(L"\s-1REST API\*(R"\s0 section.
+.SS "info"
+.IX Subsection "info"
+The \fBinfo\fR subcommand shows you some information about your current
+database.
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb info [flags]
+\&    
+\&    Flags:
+\&      \-h, \-\-help       help for info
+\&      \-N, \-\-no\-human   do not translate to human readable values
+.Ve
+.PP
+Data being shown are: filename and size, number of keys per bucket. If
+you supply the \f(CW\*(C`\-d\*(C'\fR option (debug), some bbolt internals are being
+displayed as well.
+.SS "man"
+.IX Subsection "man"
+The \fBman\fR subcommand shows an unformatted text variant of the manual
+page (which are currently reading).
+.PP
+Usage:
+.PP
+.Vb 2
+\&    Usage:
+\&      anydb man [flags]
+\&    
+\&    Flags:
+\&      \-h, \-\-help   help for man
+.Ve
+.PP
+The manual is being piped into the \f(CW\*(C`more\*(C'\fR command, which is being
+expected to exist according to the \s-1POSIX\s0 standard on all supported
+unix platforms. It might not work on Windows.
+.SH "TEMPLATES"
+.IX Header "TEMPLATES"
+The \fBget\fR and \fBlist\fR commands support a template feature, which is
+very handy to create you own kind of formatting. The template syntax
+being used is the \s-1GO\s0 template language, refer to
+<https://pkg.go.dev/text/template> for details.
+.PP
+Each template operates on one or more entries, no loop construct is
+required, the template provided applies to every matching entry
+separatley.
+.PP
+The following template variables can be used:
+.IP "\fBKey\fR \- string =item \fBValue\fR \- string =item \fBBin\fR \- []byte =item \fBCreated\fR \- time.Time =item \fBTags\fR \- []string =item \fBEncrypted\fR bool" 4
+.IX Item "Key - string =item Value - string =item Bin - []byte =item Created - time.Time =item Tags - []string =item Encrypted bool"
+.PP
+Prepend a single dot (\*(L".\*(R") before each variable name.
+.PP
+Here are some examples how to use the feature:
+.PP
+Only show the keys of all entries:
+.PP
+.Vb 1
+\&    anydb list \-m template \-T "{{ .Key }}"
+.Ve
+.PP
+Format the list in a way so that is possible to evaluate it in a
+shell:
+.PP
+.Vb 2
+\&    eval $(anydb get foo \-m template \-T "key=\*(Aq{{ .Key }}\*(Aq value=\*(Aq{{ .Value }}\*(Aq ts=\*(Aq{{ .Created}}\*(Aq")
+\&    echo "Key: $key, Value: $value"
+.Ve
+.PP
+Print the values in \s-1CSV\s0 format \s-1ONLY\s0 if they have some tag:
+.PP
+.Vb 1
+\&    anydb list \-m template \-T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created}}{{ end }}"
+.Ve
+.SH "CONFIGURATION"
+.IX Header "CONFIGURATION"
+Anydb looks at the following location for a configuration file, in
+that order:
+.ie n .IP """$HOME/.config/anydb/anydb.toml""" 4
+.el .IP "\f(CW$HOME/.config/anydb/anydb.toml\fR" 4
+.IX Item "$HOME/.config/anydb/anydb.toml"
+.PD 0
+.ie n .IP """$HOME/.anydb.toml""" 4
+.el .IP "\f(CW$HOME/.anydb.toml\fR" 4
+.IX Item "$HOME/.anydb.toml"
+.ie n .IP """anydb.toml"" in the current directory" 4
+.el .IP "\f(CWanydb.toml\fR in the current directory" 4
+.IX Item "anydb.toml in the current directory"
+.ie n .IP "or specify one using ""\-c""" 4
+.el .IP "or specify one using \f(CW\-c\fR" 4
+.IX Item "or specify one using -c"
+.PD
+The configuration format uses the \s-1TOML\s0 language, refer to
+<https://toml.io/en/> for more details. The key names correspond to
+the commandline options in most cases.
+.Sp
+Configuration follows a certain precedence: the files are tried to be
+read in the given order, followed by commandline options. That is, the
+last configuration file wins, unless the user provides a commandline
+option, then this setting will be taken.
+.Sp
+A complete configuration file might look like this:
+.Sp
+.Vb 7
+\&    # defaults
+\&    dbfile     = "~/.config/anydb/default.db"
+\&    dbbucket   = "data"
+\&    noheaders  = false
+\&    nohumanize = false
+\&    encrypt    = false
+\&    listen     = "localhost:8787"
+\&    
+\&    # different setups for different buckets
+\&    [buckets.data]
+\&    encrypt = true
+\&    
+\&    [buckets.test]
+\&    encrypt = false
+.Ve
+.Sp
+Under normal circumstances you don't need a configuration
+file. However, if you want to use different buckets, then this might
+be a handy option. Buckets are being configured in ini-style with the
+term \*(L"bucket.\*(R" followed by the bucket name. In the example above we
+enable encryption for the default bucket \*(L"data\*(R" and disable it for a
+bucket \*(L"test\*(R". To use different buckets, use the \f(CW\*(C`\-b\*(C'\fR option.
+.SH "REST API"
+.IX Header "REST API"
+The subcommand \fBserve\fR starts a simple \s-1HTTP\s0 service, which responds
+to RESTful \s-1HTTP\s0 requests. The listener responds to all requests with a
+\&\s-1JSON\s0 encoded response. The response contains the status and the
+content \- if any \- of the requested resource.
+.PP
+The following requests are supported:
+.IP "\fB\s-1GET\s0 /anydb/v1/\fR" 4
+.IX Item "GET /anydb/v1/"
+Returns a \s-1JSON\s0 encoded list of all entries.
+.IP "\fB\s-1GET\s0 /anydb/v1/key\fR" 4
+.IX Item "GET /anydb/v1/key"
+Returns the \s-1JSON\s0 encoded entry, if found.
+.IP "\fB\s-1PUT\s0 /anydb/v1/\fR" 4
+.IX Item "PUT /anydb/v1/"
+Create an entry. Expects a \s-1JSON\s0 encoded request object in \s-1POST\s0 data.
+.IP "\fB\s-1DELETE\s0 /anydb/v1/key\fR" 4
+.IX Item "DELETE /anydb/v1/key"
+Delete an entry.
+.PP
+Some curl example calls to the \s-1API:\s0
+.PP
+Post a new key:
+    curl \-X \s-1PUT\s0 localhost:8787/anydb/v1/ \e
+      \-H 'Content\-Type: application/json' \e
+      \-d '{\*(L"key\*(R":\*(L"foo\*(R",\*(L"val\*(R":\*(L"bar\*(R"}'
+.PP
+Retrieve the value:
+.PP
+.Vb 1
+\&    curl localhost:8787/anydb/v1/foo
+.Ve
+.PP
+List all keys:
+.PP
+.Vb 1
+\&    curl localhost:8787/anydb/v1/
+.Ve
+.SH "BUGS"
+.IX Header "BUGS"
+In order to report a bug, unexpected behavior, feature requests
+or to submit a patch, please open an issue on github:
+<https://github.com/TLINDEN/anydb/issues>.
+.PP
+Please repeat the failing command with debugging enabled \f(CW\*(C`\-d\*(C'\fR and
+include the output in the issue.
+.SH "LIMITATIONS"
+.IX Header "LIMITATIONS"
+The \s-1REST API\s0 list request doesn't provide any filtering capabilities yet.
 .SH "LICENSE"
 .IX Header "LICENSE"
 This software is licensed under the \s-1GNU GENERAL PUBLIC LICENSE\s0 version 3.

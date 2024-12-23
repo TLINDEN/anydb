@@ -138,7 +138,7 @@ func Get(conf *cfg.Config) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVarP(&attr.File, "output", "o", "", "output value to file (ignores -m)")
-	cmd.PersistentFlags().StringVarP(&conf.Mode, "mode", "m", "", "output format (simple|wide|json) (default 'simple')")
+	cmd.PersistentFlags().StringVarP(&conf.Mode, "mode", "m", "", "output format (simple|wide|json|template) (default 'simple')")
 	cmd.PersistentFlags().BoolVarP(&conf.NoHeaders, "no-headers", "n", false, "omit headers in tables")
 	cmd.PersistentFlags().BoolVarP(&conf.NoHumanize, "no-human", "N", false, "do not translate to human readable values")
 	cmd.PersistentFlags().StringVarP(&conf.Template, "template", "T", "", "go template for '-m template'")
@@ -217,7 +217,7 @@ func List(conf *cfg.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&conf.Mode, "mode", "m", "", "output format (table|wide|json), wide is a verbose table. (default 'table')")
+	cmd.PersistentFlags().StringVarP(&conf.Mode, "mode", "m", "", "output format (table|wide|json|template), wide is a verbose table. (default 'table')")
 	cmd.PersistentFlags().StringVarP(&conf.Template, "template", "T", "", "go template for '-m template'")
 	cmd.PersistentFlags().BoolVarP(&wide, "wide-output", "l", false, "output mode: wide")
 	cmd.PersistentFlags().BoolVarP(&conf.NoHeaders, "no-headers", "n", false, "omit headers in tables")

@@ -1,2 +1,4 @@
 - repl
 - mime-type => exec app + value
+- add waitgroup to db.go funcs
+- RestList does not support any params?
