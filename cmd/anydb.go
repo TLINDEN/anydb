@@ -116,12 +116,12 @@ SUBCOMMANDS
         anydb set key -f file
 
     Values can be encrypted using ChaCha20Poly1305 when you specify the "-e"
-    option. Anydb will ask you interactively for a passphrase. You might as
-    well provide the passphrase using the environment variable
-    "ANYDB_PASSWORD". To encrypt the value, a cryptographically secure key
-    will be derived from the passphrase using the ArgonID2 algorithm. Each
-    value can be encrypted with another passphrase. So, the database itself
-    is not encrypted, just the values.
+    option. Anydb will ask you interactively for a passphrase. You can also
+    provide the passphrase using the environment variable "ANYDB_PASSWORD".
+    To encrypt the value, a cryptographically secure key will be derived
+    from the passphrase using the ArgonID2 algorithm. Each value can be
+    encrypted with another passphrase. So, the database itself is not
+    encrypted, just the values.
 
     You can supply tags by using the option "-t". Multiple tags can be
     provided either by separating them with a comma or by using multiple
@@ -172,7 +172,7 @@ SUBCOMMANDS
     decrypt it. If the environment variable "ANYDB_PASSWORD" is set, its
     value will be used instead.
 
-    There are different output modes you can choos from: simple, wide and
+    There are different output modes you can choose from: simple, wide and
     json. The "simple" mode is the default one, it just prints the value as
     is. The "wide" mode prints a tabular output similar to the list
     subcommand, see there for more details. The options "-n" and "-N" have
@@ -187,14 +187,16 @@ SUBCOMMANDS
     Usage:
 
         Usage:
-          anydb list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [flags]
+          anydb list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [-i] [flags]
     
         Aliases:
           list, /, ls
     
         Flags:
+          -i, --case-insensitive   filter case insensitive
           -h, --help               help for list
-          -m, --mode string        output format (table|wide|json|template), wide is a verbose table. (default 'table')
+          -m, --mode string        output format (table|wide|json|template),
+                                   wide is a verbose table. (default 'table')
           -n, --no-headers         omit headers in tables
           -N, --no-human           do not translate to human readable values
           -t, --tags stringArray   tags, multiple allowed
@@ -229,6 +231,8 @@ SUBCOMMANDS
     the syntax, refer to <https://github.com/google/re2/wiki/Syntax>. Please
     note, that this regexp dialect is not PCRE compatible, but supports most
     of its features.
+
+    If you want to search case insensitive, add the option "-i".
 
     You can - as with the get command - use other output modes. The default
     mode is "table". The "wide" mode is, as already mentioned, a more
@@ -281,7 +285,7 @@ SUBCOMMANDS
     Please note, that this does not work with binary content!
 
   export
-    Since the bbold database file is not portable across platforms (it is
+    Since the bbolt database file is not portable across platforms (it is
     bound to the endianess of the CPU it was being created on), you might
     want to create a backup file of your database. You can do this with the
     export subcommand.
@@ -402,8 +406,12 @@ TEMPLATES
 
     The following template variables can be used:
 
-    Key - string =item Value - string =item Bin - []byte =item Created -
-    time.Time =item Tags - []string =item Encrypted bool
+    Key - string
+    Value - string
+    Bin - []byte
+    Created - time.Time
+    Tags - []string
+    Encrypted bool
 
     Prepend a single dot (".") before each variable name.
 
@@ -423,45 +431,46 @@ TEMPLATES
         anydb list -m template -T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created}}{{ end }}"
 
 CONFIGURATION
-    Anydb looks at the following location for a configuration file, in that
+    Anydb looks at the following locations for a configuration file, in that
     order:
 
     "$HOME/.config/anydb/anydb.toml"
     "$HOME/.anydb.toml"
     "anydb.toml" in the current directory
     or specify one using "-c"
-        The configuration format uses the TOML language, refer to
-        <https://toml.io/en/> for more details. The key names correspond to
-        the commandline options in most cases.
 
-        Configuration follows a certain precedence: the files are tried to
-        be read in the given order, followed by commandline options. That
-        is, the last configuration file wins, unless the user provides a
-        commandline option, then this setting will be taken.
+    The configuration format uses the TOML language, refer to
+    <https://toml.io/en/> for more details. The key names correspond to the
+    commandline options in most cases.
 
-        A complete configuration file might look like this:
+    Configuration follows a certain precedence: the files are tried to be
+    read in the given order, followed by commandline options. That is, the
+    last configuration file wins, unless the user provides a commandline
+    option, then this setting will be taken.
 
-            # defaults
-            dbfile     = "~/.config/anydb/default.db"
-            dbbucket   = "data"
-            noheaders  = false
-            nohumanize = false
-            encrypt    = false
-            listen     = "localhost:8787"
+    A complete configuration file might look like this:
+
+        # defaults
+        dbfile     = "~/.config/anydb/default.db"
+        dbbucket   = "data"
+        noheaders  = false
+        nohumanize = false
+        encrypt    = false
+        listen     = "localhost:8787"
     
-            # different setups for different buckets
-            [buckets.data]
-            encrypt = true
+        # different setups for different buckets
+        [buckets.data]
+        encrypt = true
     
-            [buckets.test]
-            encrypt = false
+        [buckets.test]
+        encrypt = false
 
-        Under normal circumstances you don't need a configuration file.
-        However, if you want to use different buckets, then this might be a
-        handy option. Buckets are being configured in ini-style with the
-        term "bucket." followed by the bucket name. In the example above we
-        enable encryption for the default bucket "data" and disable it for a
-        bucket "test". To use different buckets, use the "-b" option.
+    Under normal circumstances you don't need a configuration file. However,
+    if you want to use different buckets, then this might be a handy option.
+    Buckets are being configured in ini-style with the term "bucket."
+    followed by the bucket name. In the example above we enable encryption
+    for the default bucket "data" and disable it for a bucket "test". To use
+    different buckets, use the "-b" option.
 
 REST API
     The subcommand serve starts a simple HTTP service, which responds to

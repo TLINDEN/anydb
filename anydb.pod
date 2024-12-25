@@ -526,7 +526,6 @@ term "bucket." followed by the bucket name. In the example above we
 enable encryption for the default bucket "data" and disable it for a
 bucket "test". To use different buckets, use the C<-b> option.
 
-=back
 
 =head1 REST API
 
