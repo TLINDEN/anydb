@@ -27,6 +27,8 @@ import (
 	"time"
 
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/proto"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const MaxValueWidth int = 60
@@ -36,17 +38,6 @@ type DB struct {
 	Dbfile string
 	Bucket string
 	DB     *bolt.DB
-}
-
-type DbEntry struct {
-	Id        string    `json:"id"`
-	Key       string    `json:"key"`
-	Value     string    `json:"value"`
-	Encrypted bool      `json:"encrypted"`
-	Bin       []byte    `json:"bin"`
-	Tags      []string  `json:"tags"`
-	Created   time.Time `json:"created"`
-	Size      int
 }
 
 type BucketInfo struct {
@@ -65,7 +56,7 @@ type DbInfo struct {
 // Post process an entry for list output.
 // Do NOT call it during write processing!
 func (entry *DbEntry) Normalize() {
-	entry.Size = len(entry.Value)
+	entry.Size = uint64(len(entry.Value))
 
 	if entry.Encrypted {
 		entry.Value = "<encrypted-content>"
@@ -73,7 +64,7 @@ func (entry *DbEntry) Normalize() {
 
 	if len(entry.Bin) > 0 {
 		entry.Value = "<binary-content>"
-		entry.Size = len(entry.Bin)
+		entry.Size = uint64(len(entry.Bin))
 	}
 
 	if strings.Contains(entry.Value, "\n") {
@@ -140,10 +131,10 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 			return nil
 		}
 
-		err := bucket.ForEach(func(key, jsonentry []byte) error {
+		err := bucket.ForEach(func(key, pbentry []byte) error {
 			var entry DbEntry
-			if err := json.Unmarshal(jsonentry, &entry); err != nil {
-				return fmt.Errorf("failed to unmarshal from json: %w", err)
+			if err := proto.Unmarshal(pbentry, &entry); err != nil {
+				return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 			}
 
 			var include bool
@@ -196,7 +187,7 @@ func (db *DB) Set(attr *DbAttr) error {
 		Bin:       attr.Bin,
 		Tags:      attr.Tags,
 		Encrypted: attr.Encrypted,
-		Created:   time.Now(),
+		Created:   timestamppb.Now(),
 	}
 
 	// check if the  entry already exists and if yes,  check if it has
@@ -208,14 +199,14 @@ func (db *DB) Set(attr *DbAttr) error {
 			return nil
 		}
 
-		jsonentry := bucket.Get([]byte(entry.Key))
-		if jsonentry == nil {
+		pbentry := bucket.Get([]byte(entry.Key))
+		if pbentry == nil {
 			return nil
 		}
 
 		var oldentry DbEntry
-		if err := json.Unmarshal(jsonentry, &oldentry); err != nil {
-			return fmt.Errorf("failed to unmarshal from json: %w", err)
+		if err := proto.Unmarshal(pbentry, &oldentry); err != nil {
+			return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 		}
 
 		if len(oldentry.Tags) > 0 && len(entry.Tags) == 0 {
@@ -237,12 +228,12 @@ func (db *DB) Set(attr *DbAttr) error {
 			return fmt.Errorf("failed to create DB bucket: %w", err)
 		}
 
-		jsonentry, err := json.Marshal(entry)
+		pbentry, err := proto.Marshal(&entry)
 		if err != nil {
-			return fmt.Errorf("failed to marshall json: %w", err)
+			return fmt.Errorf("failed to marshall protobuf: %w", err)
 		}
 
-		err = bucket.Put([]byte(entry.Key), []byte(jsonentry))
+		err = bucket.Put([]byte(entry.Key), []byte(pbentry))
 		if err != nil {
 			return fmt.Errorf("failed to insert data: %w", err)
 		}
@@ -271,14 +262,14 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 			return nil
 		}
 
-		jsonentry := bucket.Get([]byte(attr.Key))
-		if jsonentry == nil {
+		pbentry := bucket.Get([]byte(attr.Key))
+		if pbentry == nil {
 			// FIXME: shall we return a key not found error?
 			return nil
 		}
 
-		if err := json.Unmarshal(jsonentry, &entry); err != nil {
-			return fmt.Errorf("failed to unmarshal from json: %w", err)
+		if err := proto.Unmarshal(pbentry, &entry); err != nil {
+			return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 		}
 
 		return nil
@@ -352,12 +343,12 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 		}
 
 		for _, entry := range entries {
-			jsonentry, err := json.Marshal(entry)
+			pbentry, err := proto.Marshal(&entry)
 			if err != nil {
-				return fmt.Errorf("failed to marshall json: %w", err)
+				return fmt.Errorf("failed to marshall protobuf: %w", err)
 			}
 
-			err = bucket.Put([]byte(entry.Key), []byte(jsonentry))
+			err = bucket.Put([]byte(entry.Key), []byte(pbentry))
 			if err != nil {
 				return fmt.Errorf("failed to insert data into DB: %w", err)
 			}

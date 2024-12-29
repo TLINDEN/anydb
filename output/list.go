@@ -102,8 +102,8 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 				table.Append([]string{
 					row.Key,
 					strings.Join(row.Tags, ","),
-					strconv.Itoa(row.Size),
-					row.Created.Format("02.01.2006T03:04.05"),
+					strconv.FormatUint(row.Size, 10),
+					row.Created.AsTime().Format("02.01.2006T03:04.05"),
 					row.Value,
 				})
 			default:
@@ -112,7 +112,7 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 					strings.Join(row.Tags, ","),
 					humanize.Bytes(uint64(row.Size)),
 					//row.Created.Format("02.01.2006T03:04.05"),
-					humanize.Time(row.Created),
+					humanize.Time(row.Created.AsTime()),
 					row.Value,
 				})
 			}
