@@ -53,32 +53,6 @@ type DbInfo struct {
 	Path    string
 }
 
-// Post process an entry for list output.
-// Do NOT call it during write processing!
-func (entry *DbEntry) Normalize() {
-	entry.Size = uint64(len(entry.Value))
-
-	if entry.Encrypted {
-		entry.Value = "<encrypted-content>"
-	}
-
-	if len(entry.Bin) > 0 {
-		entry.Value = "<binary-content>"
-		entry.Size = uint64(len(entry.Bin))
-	}
-
-	if strings.Contains(entry.Value, "\n") {
-		parts := strings.Split(entry.Value, "\n")
-		if len(parts) > 0 {
-			entry.Value = parts[0]
-		}
-	}
-
-	if len(entry.Value) > MaxValueWidth {
-		entry.Value = entry.Value[0:MaxValueWidth] + "..."
-	}
-}
-
 type DbEntries []DbEntry
 
 type DbTag struct {
@@ -126,7 +100,12 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
 
-		bucket := tx.Bucket([]byte(db.Bucket))
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
+
+		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
@@ -141,8 +120,7 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 
 			switch {
 			case filter != nil:
-				if filter.MatchString(entry.Value) ||
-					filter.MatchString(entry.Key) ||
+				if filter.MatchString(entry.Key) ||
 					filter.MatchString(strings.Join(entry.Tags, " ")) {
 					include = true
 				}
@@ -183,18 +161,24 @@ func (db *DB) Set(attr *DbAttr) error {
 
 	entry := DbEntry{
 		Key:       attr.Key,
-		Value:     attr.Val,
-		Bin:       attr.Bin,
+		Binary:    attr.Binary,
 		Tags:      attr.Tags,
 		Encrypted: attr.Encrypted,
 		Created:   timestamppb.Now(),
+		Size:      uint64(len(attr.Val)),
+		Preview:   attr.Preview,
 	}
 
 	// check if the  entry already exists and if yes,  check if it has
 	// any  tags. if so,  we initialize  our update struct  with these
 	// tags unless it has new tags configured.
 	err := db.DB.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(db.Bucket))
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
+
+		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
@@ -221,19 +205,39 @@ func (db *DB) Set(attr *DbAttr) error {
 		return err
 	}
 
+	// marshall our data
+	pbentry, err := proto.Marshal(&entry)
+	if err != nil {
+		return fmt.Errorf("failed to marshall protobuf: %w", err)
+	}
+
 	err = db.DB.Update(func(tx *bolt.Tx) error {
-		// insert data
-		bucket, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
+		// create root bucket
+		root, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
 		if err != nil {
 			return fmt.Errorf("failed to create DB bucket: %w", err)
 		}
 
-		pbentry, err := proto.Marshal(&entry)
+		// create meta bucket
+		bucket, err := root.CreateBucketIfNotExists([]byte("meta"))
 		if err != nil {
-			return fmt.Errorf("failed to marshall protobuf: %w", err)
+			return fmt.Errorf("failed to create DB meta sub bucket: %w", err)
 		}
 
+		// write meta data
 		err = bucket.Put([]byte(entry.Key), []byte(pbentry))
+		if err != nil {
+			return fmt.Errorf("failed to insert data: %w", err)
+		}
+
+		// create data bucket
+		databucket, err := root.CreateBucketIfNotExists([]byte("data"))
+		if err != nil {
+			return fmt.Errorf("failed to create DB data sub bucket: %w", err)
+		}
+
+		// write value
+		err = databucket.Put([]byte(entry.Key), attr.Val)
 		if err != nil {
 			return fmt.Errorf("failed to insert data: %w", err)
 		}
@@ -257,19 +261,33 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 	entry := DbEntry{}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(db.Bucket))
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
+
+		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
 
 		pbentry := bucket.Get([]byte(attr.Key))
 		if pbentry == nil {
-			// FIXME: shall we return a key not found error?
-			return nil
+			return fmt.Errorf("no such key: %s", attr.Key)
 		}
 
 		if err := proto.Unmarshal(pbentry, &entry); err != nil {
 			return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
+		}
+
+		databucket := root.Bucket([]byte("data"))
+		if databucket == nil {
+			return fmt.Errorf("failed to retrieve data sub bucket")
+		}
+
+		entry.Value = databucket.Get([]byte(attr.Key))
+		if len(entry.Value) == 0 {
+			return fmt.Errorf("no such key: %s", attr.Key)
 		}
 
 		return nil
@@ -308,7 +326,7 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 		return "", err
 	}
 
-	if attr.Val == "" {
+	if len(attr.Val) == 0 {
 		return "", errors.New("empty json file")
 	}
 
@@ -336,10 +354,16 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 	defer db.Close()
 
 	err := db.DB.Update(func(tx *bolt.Tx) error {
-		// insert data
-		bucket, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
+		// create root bucket
+		root, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
 		if err != nil {
-			return fmt.Errorf("failed to create bucket: %w", err)
+			return fmt.Errorf("failed to create DB bucket: %w", err)
+		}
+
+		// create meta bucket
+		bucket, err := root.CreateBucketIfNotExists([]byte("meta"))
+		if err != nil {
+			return fmt.Errorf("failed to create DB meta sub bucket: %w", err)
 		}
 
 		for _, entry := range entries {
@@ -348,9 +372,22 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 				return fmt.Errorf("failed to marshall protobuf: %w", err)
 			}
 
+			// write meta data
 			err = bucket.Put([]byte(entry.Key), []byte(pbentry))
 			if err != nil {
 				return fmt.Errorf("failed to insert data into DB: %w", err)
+			}
+
+			// create data bucket
+			databucket, err := root.CreateBucketIfNotExists([]byte("data"))
+			if err != nil {
+				return fmt.Errorf("failed to create DB data sub bucket: %w", err)
+			}
+
+			// write value
+			err = databucket.Put([]byte(entry.Key), entry.Value)
+			if err != nil {
+				return fmt.Errorf("failed to insert data: %w", err)
 			}
 		}
 
@@ -407,4 +444,85 @@ func (db *DB) Info() (*DbInfo, error) {
 	})
 
 	return info, err
+}
+
+func (db *DB) Find(attr *DbAttr) (DbEntries, error) {
+	if err := db.Open(); err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	var entries DbEntries
+	var filter *regexp.Regexp
+
+	if len(attr.Args) > 0 {
+		filter = regexp.MustCompile(attr.Args[0])
+	}
+
+	err := db.DB.View(func(tx *bolt.Tx) error {
+
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
+
+		bucket := root.Bucket([]byte("meta"))
+		if bucket == nil {
+			return nil
+		}
+
+		databucket := root.Bucket([]byte("data"))
+		if databucket == nil {
+			return fmt.Errorf("failed to retrieve data sub bucket")
+		}
+
+		err := bucket.ForEach(func(key, pbentry []byte) error {
+			var entry DbEntry
+			if err := proto.Unmarshal(pbentry, &entry); err != nil {
+				return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
+			}
+
+			entry.Value = databucket.Get([]byte(entry.Key))
+
+			var include bool
+
+			switch {
+			case filter != nil:
+				if filter.MatchString(entry.Key) ||
+					filter.MatchString(strings.Join(entry.Tags, " ")) {
+					include = true
+				}
+
+				if !entry.Binary && !include {
+					if filter.MatchString(string(entry.Value)) {
+						include = true
+					}
+				}
+			case len(attr.Tags) > 0:
+				for _, search := range attr.Tags {
+					for _, tag := range entry.Tags {
+						if tag == search {
+							include = true
+							break
+						}
+					}
+
+					if include {
+						break
+					}
+				}
+			default:
+				include = true
+			}
+
+			if include {
+				entries = append(entries, entry)
+			}
+
+			return nil
+		})
+
+		return err
+	})
+	return entries, err
 }

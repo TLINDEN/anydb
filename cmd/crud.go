@@ -20,7 +20,6 @@ import (
 	"errors"
 	"os"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
@@ -124,12 +123,7 @@ func Get(conf *cfg.Config) *cobra.Command {
 					return err
 				}
 
-				if utf8.ValidString(string(clear)) {
-					entry.Value = string(clear)
-				} else {
-					entry.Bin = clear
-				}
-
+				entry.Value = clear
 				entry.Encrypted = false
 			}
 
@@ -188,7 +182,7 @@ func List(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [-i]",
+		Use:   "list  [<filter-regex>] [-m <mode>] [-n -N] [-T <tpl>] [-i]",
 		Short: "List database contents",
 		Long:  `List database contents`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -227,10 +221,63 @@ func List(conf *cfg.Config) *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&conf.NoHeaders, "no-headers", "n", false, "omit headers in tables")
 	cmd.PersistentFlags().BoolVarP(&conf.NoHumanize, "no-human", "N", false, "do not translate to human readable values")
 	cmd.PersistentFlags().BoolVarP(&conf.CaseInsensitive, "case-insensitive", "i", false, "filter case insensitive")
+
+	cmd.Aliases = append(cmd.Aliases, "ls")
+
+	return cmd
+}
+
+func Find(conf *cfg.Config) *cobra.Command {
+	var (
+		attr app.DbAttr
+		wide bool
+	)
+
+	var cmd = &cobra.Command{
+		Use:   "find <filter-regex> | -t <tag> [-m <mode>] [-n -N] [-T <tpl>] [-i]",
+		Short: "Find database contents",
+		Long:  `Find database contents`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// errors at this stage do not cause the usage to be shown
+			cmd.SilenceUsage = true
+
+			if len(args) > 0 {
+				if conf.CaseInsensitive {
+					attr.Args = []string{"(?i)" + args[0]}
+				} else {
+					attr.Args = args
+				}
+			}
+
+			// turn comma list into slice, if needed
+			if len(attr.Tags) == 1 && strings.Contains(attr.Tags[0], ",") {
+				attr.Tags = strings.Split(attr.Tags[0], ",")
+			}
+
+			if wide {
+				conf.Mode = "wide"
+			}
+
+			entries, err := conf.DB.Find(&attr)
+			if err != nil {
+				return err
+			}
+
+			return output.List(os.Stdout, conf, entries)
+		},
+	}
+
+	cmd.PersistentFlags().StringVarP(&conf.Mode, "mode", "m", "", "output format (table|wide|json|template), wide is a verbose table. (default 'table')")
+	cmd.PersistentFlags().StringVarP(&conf.Template, "template", "T", "", "go template for '-m template'")
+	cmd.PersistentFlags().BoolVarP(&wide, "wide-output", "l", false, "output mode: wide")
+	cmd.PersistentFlags().BoolVarP(&conf.NoHeaders, "no-headers", "n", false, "omit headers in tables")
+	cmd.PersistentFlags().BoolVarP(&conf.NoHumanize, "no-human", "N", false, "do not translate to human readable values")
+	cmd.PersistentFlags().BoolVarP(&conf.CaseInsensitive, "case-insensitive", "i", false, "filter case insensitive")
 	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")
 
 	cmd.Aliases = append(cmd.Aliases, "/")
-	cmd.Aliases = append(cmd.Aliases, "ls")
+	cmd.Aliases = append(cmd.Aliases, "f")
+	cmd.Aliases = append(cmd.Aliases, "search")
 
 	return cmd
 }

@@ -33,3 +33,5 @@ behind.
 However, maybe change the list command to just list everything and add
 an extra find command for fulltext or tag search. Maybe still provide
 filter options in list command but only filter for keys.
+
+DONE: most of the above, except the tag stuff. manpage needs update and tests.

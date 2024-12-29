@@ -1,3 +1,5 @@
+// -*-c++-*-
+
 syntax = "proto3";
 package app;
 
@@ -8,10 +10,11 @@ option go_package = "github.com/tlinden/anydb/app";
 message DbEntry {
   string Id = 1;
   string Key = 2;
-  string Value = 3;
-  bytes Bin = 4;
-  repeated string Tags = 5;
-  google.protobuf.Timestamp Created = 6;
-  uint64 Size = 7;
-  bool Encrypted = 8;
+  string Preview = 3;
+  repeated string Tags = 4;
+  google.protobuf.Timestamp Created = 5;
+  uint64 Size = 6;
+  bool Encrypted = 7;
+  bool Binary = 8;
+  bytes Value = 9;
 }

@@ -23,7 +23,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
@@ -199,7 +198,7 @@ func Edit(conf *cfg.Config) *cobra.Command {
 				return err
 			}
 
-			if len(entry.Value) == 0 && len(entry.Bin) > 0 {
+			if len(entry.Value) == 0 && entry.Binary {
 				return errors.New("key contains binary uneditable content")
 			}
 
@@ -216,12 +215,7 @@ func Edit(conf *cfg.Config) *cobra.Command {
 					return err
 				}
 
-				if utf8.ValidString(string(clear)) {
-					entry.Value = string(clear)
-				} else {
-					entry.Bin = clear
-				}
-
+				entry.Value = clear
 				entry.Encrypted = false
 			}
 
@@ -231,7 +225,7 @@ func Edit(conf *cfg.Config) *cobra.Command {
 			// save file to a temp file, call the editor with it, read
 			// it  back in and  compare the content with  the original
 			// one
-			newcontent, err := editContent(editor, entry.Value)
+			newcontent, err := editContent(editor, string(entry.Value))
 			if err != nil {
 				return err
 			}
@@ -241,7 +235,7 @@ func Edit(conf *cfg.Config) *cobra.Command {
 				Key:       attr.Key,
 				Tags:      attr.Tags,
 				Encrypted: attr.Encrypted,
-				Val:       newcontent,
+				Val:       []byte(newcontent),
 			}
 
 			// encrypt if needed

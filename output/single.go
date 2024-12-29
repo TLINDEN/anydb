@@ -22,7 +22,6 @@ import (
 	"io"
 	"os"
 	"reflect"
-	"strings"
 
 	"github.com/dustin/go-humanize"
 	"github.com/tlinden/anydb/app"
@@ -40,16 +39,15 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 
 	switch conf.Mode {
 	case "simple", "":
-		if len(entry.Bin) > 0 {
+		if entry.Binary {
 			if isatty {
 				fmt.Println("binary data omitted")
 			} else {
-				os.Stdout.Write(entry.Bin)
+				os.Stdout.Write(entry.Value)
 			}
 		} else {
-			fmt.Print(entry.Value)
-
-			if !strings.HasSuffix(entry.Value, "\n") {
+			fmt.Print(string(entry.Value))
+			if entry.Value[entry.Size-1] != '\n' {
 				// always add a terminal newline
 				fmt.Println()
 			}
@@ -87,17 +85,14 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 		fileHandle = fd
 	}
 
-	if len(entry.Bin) > 0 {
+	if entry.Binary {
 		// binary file content
-		_, err = fileHandle.Write(entry.Bin)
-	} else {
-		val := entry.Value
-		if !strings.HasSuffix(val, "\n") {
-			// always add a terminal newline
-			val += "\n"
-		}
+		_, err = fileHandle.Write(entry.Value)
 
-		_, err = fileHandle.Write([]byte(val))
+		if entry.Value[entry.Size-1] != '\n' {
+			// always add a terminal newline
+			_, err = fileHandle.Write([]byte{'\n'})
+		}
 	}
 
 	if err != nil {

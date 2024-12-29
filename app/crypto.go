@@ -18,7 +18,6 @@ package app
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -104,7 +103,7 @@ func GetRandom(size int, capacity int) ([]byte, error) {
 // modifying it.
 //
 // The cipher text consists of:
-// base64(password-salt) + base64(12 byte nonce + ciphertext + 16 byte mac)
+// password-salt) + (12 byte nonce + ciphertext + 16 byte mac)
 func Encrypt(pass []byte, attr *DbAttr) error {
 	key, err := DeriveKey(pass, nil)
 	if err != nil {
@@ -116,25 +115,17 @@ func Encrypt(pass []byte, attr *DbAttr) error {
 		return fmt.Errorf("failed to create AEAD cipher: %w", err)
 	}
 
-	var plain []byte
-	if attr.Val != "" {
-		plain = []byte(attr.Val)
-	} else {
-		plain = attr.Bin
-	}
-
-	total := aead.NonceSize() + len(plain) + aead.Overhead()
+	total := aead.NonceSize() + len(attr.Val) + aead.Overhead()
 
 	nonce, err := GetRandom(aead.NonceSize(), total)
 	if err != nil {
 		return err
 	}
 
-	cipher := aead.Seal(nonce, nonce, plain, nil)
+	cipher := aead.Seal(nonce, nonce, attr.Val, nil)
 
-	attr.Bin = nil
-	attr.Val = base64.RawStdEncoding.EncodeToString(key.Salt) +
-		base64.RawStdEncoding.EncodeToString(cipher)
+	attr.Val = append(attr.Val, key.Salt...)
+	attr.Val = append(attr.Val, cipher...)
 
 	attr.Encrypted = true
 
@@ -142,21 +133,17 @@ func Encrypt(pass []byte, attr *DbAttr) error {
 }
 
 // Do the reverse
-func Decrypt(pass []byte, cipherb64 string) ([]byte, error) {
-	salt, err := base64.RawStdEncoding.Strict().DecodeString(cipherb64[0:B64SaltLen])
-	if err != nil {
-		return nil, fmt.Errorf("failed to encode to base64: %w", err)
+func Decrypt(pass []byte, cipherb []byte) ([]byte, error) {
+	if len(cipherb) < B64SaltLen {
+		return nil, fmt.Errorf("encrypted cipher block too small")
 	}
 
-	key, err := DeriveKey(pass, salt)
+	key, err := DeriveKey(pass, cipherb[0:B64SaltLen])
 	if err != nil {
 		return nil, err
 	}
 
-	cipher, err := base64.RawStdEncoding.Strict().DecodeString(cipherb64[B64SaltLen:])
-	if err != nil {
-		return nil, fmt.Errorf("failed to encode to base64: %w", err)
-	}
+	cipher := cipherb[B64SaltLen:]
 
 	aead, err := chacha20poly1305.New(key.Key)
 	if err != nil {
