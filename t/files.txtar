@@ -32,3 +32,20 @@ stdout 50
 # look if it's inside the db
 exec anydb -f test.db ls
 stdout datum.*binary-content
+
+# do the same thing with text content, start with a new text entry
+exec anydb -f test.db set feed alpha
+
+# which we write to a file
+exec anydb -f test.db get feed -o out2.txt
+exists out2.txt
+
+# check if its filled (5 bytes + newline)
+exec ls -l out2.txt
+stdout 6
+
+# compare content
+exec cat out2.txt
+stdout alpha
+
+

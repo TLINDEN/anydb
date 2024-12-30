@@ -37,16 +37,16 @@ func Export(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "export [-o <json filename>]",
-		Short: "Export database to json",
-		Long:  `Export database to json`,
+		Use:   "export -o <json filename>",
+		Short: "Export database to json file",
+		Long:  `Export database to json file`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// errors at this stage do not cause the usage to be shown
 			cmd.SilenceUsage = true
 
 			conf.Mode = "json"
 
-			entries, err := conf.DB.List(&attr)
+			entries, err := conf.DB.Getall(&attr)
 			if err != nil {
 				return err
 			}
@@ -55,7 +55,8 @@ func Export(conf *cfg.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&attr.File, "output", "o", "", "output to file")
+	cmd.PersistentFlags().StringVarP(&attr.File, "output-file", "o", "", "filename or - for STDIN")
+	cmd.MarkPersistentFlagRequired("output-file")
 
 	cmd.Aliases = append(cmd.Aliases, "dump")
 	cmd.Aliases = append(cmd.Aliases, "backup")
@@ -69,7 +70,7 @@ func Import(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "import [<json file>]",
+		Use:   "import -i <json file>",
 		Short: "Import database dump",
 		Long:  `Import database dump`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -86,7 +87,8 @@ func Import(conf *cfg.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&attr.File, "file", "r", "", "Filename or - for STDIN")
+	cmd.PersistentFlags().StringVarP(&attr.File, "import-file", "i", "", "filename or - for STDIN")
+	cmd.MarkPersistentFlagRequired("import-file")
 	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")
 
 	cmd.Aliases = append(cmd.Aliases, "restore")

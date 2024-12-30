@@ -187,18 +187,18 @@ SUBCOMMANDS
     Usage:
 
         Usage:
-          anydb list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [-i] [flags]
+          anydb list  [<filter-regex> | -t <tag> ] [-m <mode>] [-nNif] [-T <tpl>] [flags]
     
         Aliases:
-          list, /, ls
+          list, ls, /, find, search
     
         Flags:
           -i, --case-insensitive   filter case insensitive
           -h, --help               help for list
-          -m, --mode string        output format (table|wide|json|template),
-                                   wide is a verbose table. (default 'table')
+          -m, --mode string        output format (table|wide|json|template), wide is a verbose table. (default 'table')
           -n, --no-headers         omit headers in tables
           -N, --no-human           do not translate to human readable values
+          -s, --search-fulltext    perform a full text search
           -t, --tags stringArray   tags, multiple allowed
           -T, --template string    go template for '-m template'
           -l, --wide-output        output mode: wide

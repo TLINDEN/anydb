@@ -122,7 +122,6 @@ func Execute() {
 	// CRUD
 	rootCmd.AddCommand(Set(&conf))
 	rootCmd.AddCommand(List(&conf))
-	rootCmd.AddCommand(Find(&conf))
 	rootCmd.AddCommand(Get(&conf))
 	rootCmd.AddCommand(Del(&conf))
 

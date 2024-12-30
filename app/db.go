@@ -85,7 +85,7 @@ func (db *DB) Close() error {
 	return db.DB.Close()
 }
 
-func (db *DB) List(attr *DbAttr) (DbEntries, error) {
+func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
 	if err := db.Open(); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,6 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 	}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
-
 		root := tx.Bucket([]byte(db.Bucket))
 		if root == nil {
 			return nil
@@ -110,11 +109,18 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 			return nil
 		}
 
+		databucket := root.Bucket([]byte("data"))
+		if databucket == nil {
+			return fmt.Errorf("failed to retrieve data sub bucket")
+		}
+
 		err := bucket.ForEach(func(key, pbentry []byte) error {
 			var entry DbEntry
 			if err := proto.Unmarshal(pbentry, &entry); err != nil {
 				return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 			}
+
+			entry.Value = databucket.Get([]byte(entry.Key)) // empty is ok
 
 			var include bool
 
@@ -123,6 +129,12 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 				if filter.MatchString(entry.Key) ||
 					filter.MatchString(strings.Join(entry.Tags, " ")) {
 					include = true
+				}
+
+				if !entry.Binary && !include && fulltext {
+					if filter.MatchString(string(entry.Value)) {
+						include = true
+					}
 				}
 			case len(attr.Tags) > 0:
 				for _, search := range attr.Tags {
@@ -261,34 +273,47 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 	entry := DbEntry{}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
+		// root bucket
 		root := tx.Bucket([]byte(db.Bucket))
 		if root == nil {
 			return nil
 		}
 
+		// get meta sub bucket
 		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
 
+		// retrieve meta data
 		pbentry := bucket.Get([]byte(attr.Key))
 		if pbentry == nil {
 			return fmt.Errorf("no such key: %s", attr.Key)
 		}
 
+		// put into struct
 		if err := proto.Unmarshal(pbentry, &entry); err != nil {
 			return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 		}
 
+		// get data sub bucket
 		databucket := root.Bucket([]byte("data"))
 		if databucket == nil {
 			return fmt.Errorf("failed to retrieve data sub bucket")
 		}
 
-		entry.Value = databucket.Get([]byte(attr.Key))
-		if len(entry.Value) == 0 {
+		// retrieve actual data value
+		value := databucket.Get([]byte(attr.Key))
+		if len(value) == 0 {
 			return fmt.Errorf("no such key: %s", attr.Key)
 		}
+
+		// we  need to make a  copy of it, otherwise  we'll get an
+		// "unexpected fault address" error
+		vc := make([]byte, len(value))
+		copy(vc, value)
+
+		entry.Value = vc
 
 		return nil
 	})
@@ -446,78 +471,50 @@ func (db *DB) Info() (*DbInfo, error) {
 	return info, err
 }
 
-func (db *DB) Find(attr *DbAttr) (DbEntries, error) {
+func (db *DB) Getall(attr *DbAttr) (DbEntries, error) {
 	if err := db.Open(); err != nil {
 		return nil, err
 	}
 	defer db.Close()
 
 	var entries DbEntries
-	var filter *regexp.Regexp
-
-	if len(attr.Args) > 0 {
-		filter = regexp.MustCompile(attr.Args[0])
-	}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
-
+		// root bucket
 		root := tx.Bucket([]byte(db.Bucket))
 		if root == nil {
 			return nil
 		}
 
+		// get meta sub bucket
 		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
 
+		// get data sub bucket
 		databucket := root.Bucket([]byte("data"))
 		if databucket == nil {
 			return fmt.Errorf("failed to retrieve data sub bucket")
 		}
 
+		// iterate over all db entries in meta sub bucket
 		err := bucket.ForEach(func(key, pbentry []byte) error {
 			var entry DbEntry
 			if err := proto.Unmarshal(pbentry, &entry); err != nil {
 				return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 			}
 
-			entry.Value = databucket.Get([]byte(entry.Key))
+			// retrieve the value from the data sub bucket
+			value := databucket.Get([]byte(entry.Key))
 
-			var include bool
+			// we  need to make a  copy of it, otherwise  we'll get an
+			// "unexpected fault address" error
+			vc := make([]byte, len(value))
+			copy(vc, value)
 
-			switch {
-			case filter != nil:
-				if filter.MatchString(entry.Key) ||
-					filter.MatchString(strings.Join(entry.Tags, " ")) {
-					include = true
-				}
-
-				if !entry.Binary && !include {
-					if filter.MatchString(string(entry.Value)) {
-						include = true
-					}
-				}
-			case len(attr.Tags) > 0:
-				for _, search := range attr.Tags {
-					for _, tag := range entry.Tags {
-						if tag == search {
-							include = true
-							break
-						}
-					}
-
-					if include {
-						break
-					}
-				}
-			default:
-				include = true
-			}
-
-			if include {
-				entries = append(entries, entry)
-			}
+			entry.Value = vc
+			entries = append(entries, entry)
 
 			return nil
 		})

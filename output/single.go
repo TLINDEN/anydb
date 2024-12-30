@@ -75,7 +75,6 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 	if attr.File == "-" {
 		fileHandle = os.Stdout
 	} else {
-
 		fd, err := os.OpenFile(attr.File, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			return fmt.Errorf("failed to open file %s for writing: %w", attr.File, err)
@@ -85,10 +84,10 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 		fileHandle = fd
 	}
 
-	if entry.Binary {
-		// binary file content
-		_, err = fileHandle.Write(entry.Value)
+	// actually write file content
+	_, err = fileHandle.Write(entry.Value)
 
+	if !entry.Binary {
 		if entry.Value[entry.Size-1] != '\n' {
 			// always add a terminal newline
 			_, err = fileHandle.Write([]byte{'\n'})

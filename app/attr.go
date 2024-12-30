@@ -35,16 +35,18 @@ type DbAttr struct {
 	Binary    bool
 }
 
+// check if value  is to be read  from a file or  stdin, setup preview
+// text according to flags, lowercase key
 func (attr *DbAttr) ParseKV() error {
+	attr.Key = strings.ToLower(attr.Args[0])
+
 	switch len(attr.Args) {
 	case 1:
 		// 1 arg = key + read from file or stdin
-		attr.Key = attr.Args[0]
 		if attr.File == "" {
 			attr.File = "-"
 		}
 	case 2:
-		attr.Key = attr.Args[0]
 		attr.Val = []byte(attr.Args[1])
 
 		if attr.Args[1] == "-" {
@@ -58,9 +60,12 @@ func (attr *DbAttr) ParseKV() error {
 		}
 	}
 
-	if attr.Binary {
+	switch {
+	case attr.Binary:
+		attr.Preview = "<binary-content>"
+	case attr.Encrypted:
 		attr.Preview = "<encrypted-content>"
-	} else {
+	default:
 		if len(attr.Val) > MaxValueWidth {
 			attr.Preview = string(attr.Val)[0:MaxValueWidth] + "..."
 
@@ -73,9 +78,6 @@ func (attr *DbAttr) ParseKV() error {
 		} else {
 			attr.Preview = string(attr.Val)
 		}
-	}
-	if attr.Encrypted {
-		attr.Preview = "<encrypted-content>"
 	}
 
 	return nil

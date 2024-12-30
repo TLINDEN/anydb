@@ -37,12 +37,12 @@ exec anydb -f test.db list -t flower
 ! stdout bar
 
 # list with filter
-exec anydb -f test.db list b.r
+exec anydb -f test.db list b.r -s
 stdout bar
 
 # list with -i filter
-exec anydb -f test.db list -i mucha
-stdout MUCHA
+exec anydb -f test.db list -is mucha 
+stdout mucha
 
 # get single entry
 exec anydb -f test.db get color

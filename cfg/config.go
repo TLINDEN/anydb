@@ -42,6 +42,7 @@ type Config struct {
 	NoHumanize      bool
 	Encrypt         bool // one entry
 	CaseInsensitive bool
+	Fulltext        bool
 	Listen          string
 	Buckets         map[string]BucketConfig // config file only
 
