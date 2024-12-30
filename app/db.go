@@ -53,7 +53,7 @@ type DbInfo struct {
 	Path    string
 }
 
-type DbEntries []DbEntry
+type DbEntries []*DbEntry
 
 type DbTag struct {
 	Keys []string `json:"key"`
@@ -154,7 +154,7 @@ func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
 			}
 
 			if include {
-				entries = append(entries, entry)
+				entries = append(entries, &entry)
 			}
 
 			return nil
@@ -162,6 +162,7 @@ func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
 
 		return err
 	})
+
 	return entries, err
 }
 
@@ -392,7 +393,7 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 		}
 
 		for _, entry := range entries {
-			pbentry, err := proto.Marshal(&entry)
+			pbentry, err := proto.Marshal(entry)
 			if err != nil {
 				return fmt.Errorf("failed to marshall protobuf: %w", err)
 			}
@@ -514,7 +515,7 @@ func (db *DB) Getall(attr *DbAttr) (DbEntries, error) {
 			copy(vc, value)
 
 			entry.Value = vc
-			entries = append(entries, entry)
+			entries = append(entries, &entry)
 
 			return nil
 		})

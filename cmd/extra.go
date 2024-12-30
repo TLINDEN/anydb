@@ -56,7 +56,9 @@ func Export(conf *cfg.Config) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVarP(&attr.File, "output-file", "o", "", "filename or - for STDIN")
-	cmd.MarkPersistentFlagRequired("output-file")
+	if err := cmd.MarkPersistentFlagRequired("output-file"); err != nil {
+		panic(err)
+	}
 
 	cmd.Aliases = append(cmd.Aliases, "dump")
 	cmd.Aliases = append(cmd.Aliases, "backup")
@@ -88,8 +90,10 @@ func Import(conf *cfg.Config) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVarP(&attr.File, "import-file", "i", "", "filename or - for STDIN")
-	cmd.MarkPersistentFlagRequired("import-file")
 	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")
+	if err := cmd.MarkPersistentFlagRequired("import-file"); err != nil {
+		panic(err)
+	}
 
 	cmd.Aliases = append(cmd.Aliases, "restore")
 
