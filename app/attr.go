@@ -20,30 +20,34 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"unicode/utf8"
 )
 
 type DbAttr struct {
 	Key       string
-	Val       string
-	Bin       []byte
+	Preview   string
+	Val       []byte
 	Args      []string
 	Tags      []string
 	File      string
 	Encrypted bool
+	Binary    bool
 }
 
+// check if value  is to be read  from a file or  stdin, setup preview
+// text according to flags, lowercase key
 func (attr *DbAttr) ParseKV() error {
+	attr.Key = strings.ToLower(attr.Args[0])
+
 	switch len(attr.Args) {
 	case 1:
 		// 1 arg = key + read from file or stdin
-		attr.Key = attr.Args[0]
 		if attr.File == "" {
 			attr.File = "-"
 		}
 	case 2:
-		attr.Key = attr.Args[0]
-		attr.Val = attr.Args[1]
+		attr.Val = []byte(attr.Args[1])
 
 		if attr.Args[1] == "-" {
 			attr.File = "-"
@@ -51,7 +55,29 @@ func (attr *DbAttr) ParseKV() error {
 	}
 
 	if attr.File != "" {
-		return attr.GetFileValue()
+		if err := attr.GetFileValue(); err != nil {
+			return err
+		}
+	}
+
+	switch {
+	case attr.Binary:
+		attr.Preview = "<binary-content>"
+	case attr.Encrypted:
+		attr.Preview = "<encrypted-content>"
+	default:
+		if len(attr.Val) > MaxValueWidth {
+			attr.Preview = string(attr.Val)[0:MaxValueWidth] + "..."
+
+			if strings.Contains(attr.Preview, "\n") {
+				parts := strings.Split(attr.Preview, "\n")
+				if len(parts) > 0 {
+					attr.Preview = parts[0]
+				}
+			}
+		} else {
+			attr.Preview = string(attr.Val)
+		}
 	}
 
 	return nil
@@ -82,11 +108,12 @@ func (attr *DbAttr) GetFileValue() error {
 		}
 
 		// poor man's text file test
-		sdata := string(data)
-		if utf8.ValidString(sdata) {
-			attr.Val = sdata
+		attr.Val = data
+
+		if utf8.ValidString(string(data)) {
+			attr.Binary = false
 		} else {
-			attr.Bin = data
+			attr.Binary = true
 		}
 	} else {
 		// read from console stdin
@@ -101,7 +128,7 @@ func (attr *DbAttr) GetFileValue() error {
 			data += input + "\n"
 		}
 
-		attr.Val = data
+		attr.Val = []byte(data)
 	}
 
 	return nil

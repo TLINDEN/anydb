@@ -20,7 +20,6 @@ import (
 	"errors"
 	"os"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
@@ -124,12 +123,7 @@ func Get(conf *cfg.Config) *cobra.Command {
 					return err
 				}
 
-				if utf8.ValidString(string(clear)) {
-					entry.Value = string(clear)
-				} else {
-					entry.Bin = clear
-				}
-
+				entry.Value = clear
 				entry.Encrypted = false
 			}
 
@@ -188,7 +182,7 @@ func List(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [-i]",
+		Use:   "list  [<filter-regex> | -t <tag> ] [-m <mode>] [-nNif] [-T <tpl>]",
 		Short: "List database contents",
 		Long:  `List database contents`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -212,7 +206,7 @@ func List(conf *cfg.Config) *cobra.Command {
 				conf.Mode = "wide"
 			}
 
-			entries, err := conf.DB.List(&attr)
+			entries, err := conf.DB.List(&attr, conf.Fulltext)
 			if err != nil {
 				return err
 			}
@@ -227,10 +221,13 @@ func List(conf *cfg.Config) *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&conf.NoHeaders, "no-headers", "n", false, "omit headers in tables")
 	cmd.PersistentFlags().BoolVarP(&conf.NoHumanize, "no-human", "N", false, "do not translate to human readable values")
 	cmd.PersistentFlags().BoolVarP(&conf.CaseInsensitive, "case-insensitive", "i", false, "filter case insensitive")
+	cmd.PersistentFlags().BoolVarP(&conf.Fulltext, "search-fulltext", "s", false, "perform a full text search")
 	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")
 
-	cmd.Aliases = append(cmd.Aliases, "/")
 	cmd.Aliases = append(cmd.Aliases, "ls")
+	cmd.Aliases = append(cmd.Aliases, "/")
+	cmd.Aliases = append(cmd.Aliases, "find")
+	cmd.Aliases = append(cmd.Aliases, "search")
 
 	return cmd
 }

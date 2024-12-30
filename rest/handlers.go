@@ -54,7 +54,7 @@ func RestList(c *fiber.Ctx, conf *cfg.Config) error {
 	}
 
 	// get list
-	entries, err := conf.DB.List(attr)
+	entries, err := conf.DB.List(attr, false)
 	if err != nil {
 		return JsonStatus(c, fiber.StatusForbidden,
 			"Unable to list keys: "+err.Error())

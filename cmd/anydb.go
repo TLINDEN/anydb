@@ -187,18 +187,18 @@ SUBCOMMANDS
     Usage:
 
         Usage:
-          anydb list  [<filter-regex>] [-t <tag>] [-m <mode>] [-n -N] [-T <tpl>] [-i] [flags]
+          anydb list  [<filter-regex> | -t <tag> ] [-m <mode>] [-nNif] [-T <tpl>] [flags]
     
         Aliases:
-          list, /, ls
+          list, ls, /, find, search
     
         Flags:
           -i, --case-insensitive   filter case insensitive
           -h, --help               help for list
-          -m, --mode string        output format (table|wide|json|template),
-                                   wide is a verbose table. (default 'table')
+          -m, --mode string        output format (table|wide|json|template), wide is a verbose table. (default 'table')
           -n, --no-headers         omit headers in tables
           -N, --no-human           do not translate to human readable values
+          -s, --search-fulltext    perform a full text search
           -t, --tags stringArray   tags, multiple allowed
           -T, --template string    go template for '-m template'
           -l, --wide-output        output mode: wide
@@ -233,6 +233,10 @@ SUBCOMMANDS
     of its features.
 
     If you want to search case insensitive, add the option "-i".
+
+    By default anydb only searches through the keys. If you want to search
+    through the values as well, then use the "-s" option, which enables
+    full-text search.
 
     You can - as with the get command - use other output modes. The default
     mode is "table". The "wide" mode is, as already mentioned, a more
@@ -293,7 +297,7 @@ SUBCOMMANDS
     Usage:
 
         Usage:
-          anydb export [-o <json filename>] [flags]
+          anydb export -o <json filename> [flags]
     
         Aliases:
           export, dump, backup
@@ -303,11 +307,11 @@ SUBCOMMANDS
           -o, --output string   output to file
 
     The database dump is a JSON representation of the whole database and
-    will be printed to STDOUT by default. Redirect it to a file or use the
-    "-o" option:
+    will be printed to the file specified with the "-o" option. If you
+    specify "-" as the filename, it will be written to STDIN.
 
-        anydb export > dump.json
         anydb export -o dump.json
+        anydb export -o - > dump.json
 
     Please note, that encrypted values will not be decrypted. This might
     change in a future version of anydb.
@@ -319,7 +323,7 @@ SUBCOMMANDS
     Usage:
 
         Usage:
-          anydb import [<json file>] [flags]
+          anydb import -i <json file> [flags]
     
         Aliases:
           import, restore
@@ -329,12 +333,13 @@ SUBCOMMANDS
           -h, --help               help for import
           -t, --tags stringArray   tags, multiple allowed
 
-    By default the "import" subcommand reads the JSON contents from STDIN.
-    You might pipe the dump into it or use the option "-r":
+    The "import" subcommand reads the JSON contents from the file specified
+    with the "-i" option. If you specify "-" as the filename, it will be
+    read from STDIN.
 
-        anydb import < dump.json
-        anydb import -r dump.json
-        cat dump.json | anydb import
+        anydb import -i - < dump.json
+        anydb import -i dump.json
+        cat dump.json | anydb import -i -
 
     If there is already a database, it will be saved by appending a
     timestamp and a new database with the contents of the dump will be

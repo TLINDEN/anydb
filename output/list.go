@@ -65,8 +65,6 @@ func ListTemplate(writer io.Writer, conf *cfg.Config, entries app.DbEntries) err
 	buf := bytes.Buffer{}
 
 	for _, row := range entries {
-		row.Normalize()
-
 		buf.Reset()
 		err = tmpl.Execute(&buf, row)
 		if err != nil {
@@ -94,31 +92,28 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 	}
 
 	for _, row := range entries {
-		row.Normalize()
-
 		if conf.Mode == "wide" {
 			switch conf.NoHumanize {
 			case true:
 				table.Append([]string{
 					row.Key,
 					strings.Join(row.Tags, ","),
-					strconv.Itoa(row.Size),
-					row.Created.Format("02.01.2006T03:04.05"),
-					row.Value,
+					strconv.FormatUint(row.Size, 10),
+					row.Created.AsTime().Format("02.01.2006T03:04.05"),
+					row.Preview,
 				})
 			default:
 				table.Append([]string{
 					row.Key,
 					strings.Join(row.Tags, ","),
 					humanize.Bytes(uint64(row.Size)),
-					//row.Created.Format("02.01.2006T03:04.05"),
-					humanize.Time(row.Created),
-					row.Value,
+					humanize.Time(row.Created.AsTime()),
+					row.Preview,
 				})
 			}
 
 		} else {
-			table.Append([]string{row.Key, row.Value})
+			table.Append([]string{row.Key, row.Preview})
 		}
 	}
 

@@ -76,10 +76,14 @@ anydb set foo bar -t note,important
 anydb list -t important
 
 # beside tags filtering you can also use regexps for searching
+# note, by default the list command only searches through keys
 anydb list '[a-z]+\d'
 
+# do a full text search
+anydb list '[a-z]+\d' -s
+
 # anydb also supports a wide output
-anydb list -o wide
+anydb list -m wide
 KEY     TAGS            SIZE    AGE             VALUE 
 blah    important       4 B     7 seconds ago   haha 
 foo                     3 B     15 seconds ago  bar
@@ -90,13 +94,13 @@ anydb ls -l
 anydb /
 
 # other outputs are possible as well
-anydb list -o json
+anydb list -m json
 
 # you can backup your database
 anydb export -o backup.json
 
 # and import it somewhere else
-anydb import -r backup.json
+anydb import -i backup.json
 
 # you can encrypt entries. anydb asks for a passphrase
 # and will do the same when you retrieve the key using the

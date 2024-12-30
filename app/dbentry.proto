@@ -1,0 +1,20 @@
+// -*-c++-*-
+
+syntax = "proto3";
+package app;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/tlinden/anydb/app";
+
+message DbEntry {
+  string Id = 1;
+  string Key = 2;
+  string Preview = 3;
+  repeated string Tags = 4;
+  google.protobuf.Timestamp Created = 5;
+  uint64 Size = 6;
+  bool Encrypted = 7;
+  bool Binary = 8;
+  bytes Value = 9;
+}

@@ -29,7 +29,7 @@ BUILD     = $(shell date +%Y.%m.%d.%H%M%S)
 VERSION  := $(if $(filter $(BRANCH), development),$(version)-$(BRANCH)-$(COMMIT)-$(BUILD),$(version))
 HAVE_POD := $(shell pod2text -h 2>/dev/null)
 
-all: $(tool).1 cmd/$(tool).go buildlocal
+all: $(tool).1 cmd/$(tool).go app/dbentry.pb.go buildlocal
 
 %.1: %.pod
 ifdef HAVE_POD
@@ -48,6 +48,11 @@ endif
 # echo "var usage = \`" >> cmd/$*.go
 # awk '/SYNOPS/{f=1;next} /DESCR/{f=0} f' $*.pod  | sed 's/^    //' >> cmd/$*.go
 # echo "\`" >> cmd/$*.go
+
+app/dbentry.pb.go: app/dbentry.proto
+	protoc -I=. --go_out=app app/dbentry.proto
+	mv app/github.com/tlinden/anydb/app/dbentry.pb.go app/dbentry.pb.go
+	rm -rf app/github.com
 
 buildlocal:
 	go build -ldflags "-X 'github.com/tlinden/anydb/cfg.VERSION=$(VERSION)'"

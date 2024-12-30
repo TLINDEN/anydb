@@ -27,6 +27,8 @@ import (
 	"time"
 
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/proto"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const MaxValueWidth int = 60
@@ -36,17 +38,6 @@ type DB struct {
 	Dbfile string
 	Bucket string
 	DB     *bolt.DB
-}
-
-type DbEntry struct {
-	Id        string    `json:"id"`
-	Key       string    `json:"key"`
-	Value     string    `json:"value"`
-	Encrypted bool      `json:"encrypted"`
-	Bin       []byte    `json:"bin"`
-	Tags      []string  `json:"tags"`
-	Created   time.Time `json:"created"`
-	Size      int
 }
 
 type BucketInfo struct {
@@ -62,33 +53,7 @@ type DbInfo struct {
 	Path    string
 }
 
-// Post process an entry for list output.
-// Do NOT call it during write processing!
-func (entry *DbEntry) Normalize() {
-	entry.Size = len(entry.Value)
-
-	if entry.Encrypted {
-		entry.Value = "<encrypted-content>"
-	}
-
-	if len(entry.Bin) > 0 {
-		entry.Value = "<binary-content>"
-		entry.Size = len(entry.Bin)
-	}
-
-	if strings.Contains(entry.Value, "\n") {
-		parts := strings.Split(entry.Value, "\n")
-		if len(parts) > 0 {
-			entry.Value = parts[0]
-		}
-	}
-
-	if len(entry.Value) > MaxValueWidth {
-		entry.Value = entry.Value[0:MaxValueWidth] + "..."
-	}
-}
-
-type DbEntries []DbEntry
+type DbEntries []*DbEntry
 
 type DbTag struct {
 	Keys []string `json:"key"`
@@ -120,7 +85,7 @@ func (db *DB) Close() error {
 	return db.DB.Close()
 }
 
-func (db *DB) List(attr *DbAttr) (DbEntries, error) {
+func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
 	if err := db.Open(); err != nil {
 		return nil, err
 	}
@@ -134,26 +99,42 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 	}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
 
-		bucket := tx.Bucket([]byte(db.Bucket))
+		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
 
-		err := bucket.ForEach(func(key, jsonentry []byte) error {
+		databucket := root.Bucket([]byte("data"))
+		if databucket == nil {
+			return fmt.Errorf("failed to retrieve data sub bucket")
+		}
+
+		err := bucket.ForEach(func(key, pbentry []byte) error {
 			var entry DbEntry
-			if err := json.Unmarshal(jsonentry, &entry); err != nil {
-				return fmt.Errorf("failed to unmarshal from json: %w", err)
+			if err := proto.Unmarshal(pbentry, &entry); err != nil {
+				return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 			}
+
+			entry.Value = databucket.Get([]byte(entry.Key)) // empty is ok
 
 			var include bool
 
 			switch {
 			case filter != nil:
-				if filter.MatchString(entry.Value) ||
-					filter.MatchString(entry.Key) ||
+				if filter.MatchString(entry.Key) ||
 					filter.MatchString(strings.Join(entry.Tags, " ")) {
 					include = true
+				}
+
+				if !entry.Binary && !include && fulltext {
+					if filter.MatchString(string(entry.Value)) {
+						include = true
+					}
 				}
 			case len(attr.Tags) > 0:
 				for _, search := range attr.Tags {
@@ -173,7 +154,7 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 			}
 
 			if include {
-				entries = append(entries, entry)
+				entries = append(entries, &entry)
 			}
 
 			return nil
@@ -181,6 +162,7 @@ func (db *DB) List(attr *DbAttr) (DbEntries, error) {
 
 		return err
 	})
+
 	return entries, err
 }
 
@@ -192,30 +174,36 @@ func (db *DB) Set(attr *DbAttr) error {
 
 	entry := DbEntry{
 		Key:       attr.Key,
-		Value:     attr.Val,
-		Bin:       attr.Bin,
+		Binary:    attr.Binary,
 		Tags:      attr.Tags,
 		Encrypted: attr.Encrypted,
-		Created:   time.Now(),
+		Created:   timestamppb.Now(),
+		Size:      uint64(len(attr.Val)),
+		Preview:   attr.Preview,
 	}
 
 	// check if the  entry already exists and if yes,  check if it has
 	// any  tags. if so,  we initialize  our update struct  with these
 	// tags unless it has new tags configured.
 	err := db.DB.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(db.Bucket))
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
+
+		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
 
-		jsonentry := bucket.Get([]byte(entry.Key))
-		if jsonentry == nil {
+		pbentry := bucket.Get([]byte(entry.Key))
+		if pbentry == nil {
 			return nil
 		}
 
 		var oldentry DbEntry
-		if err := json.Unmarshal(jsonentry, &oldentry); err != nil {
-			return fmt.Errorf("failed to unmarshal from json: %w", err)
+		if err := proto.Unmarshal(pbentry, &oldentry); err != nil {
+			return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 		}
 
 		if len(oldentry.Tags) > 0 && len(entry.Tags) == 0 {
@@ -230,19 +218,39 @@ func (db *DB) Set(attr *DbAttr) error {
 		return err
 	}
 
+	// marshall our data
+	pbentry, err := proto.Marshal(&entry)
+	if err != nil {
+		return fmt.Errorf("failed to marshall protobuf: %w", err)
+	}
+
 	err = db.DB.Update(func(tx *bolt.Tx) error {
-		// insert data
-		bucket, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
+		// create root bucket
+		root, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
 		if err != nil {
 			return fmt.Errorf("failed to create DB bucket: %w", err)
 		}
 
-		jsonentry, err := json.Marshal(entry)
+		// create meta bucket
+		bucket, err := root.CreateBucketIfNotExists([]byte("meta"))
 		if err != nil {
-			return fmt.Errorf("failed to marshall json: %w", err)
+			return fmt.Errorf("failed to create DB meta sub bucket: %w", err)
 		}
 
-		err = bucket.Put([]byte(entry.Key), []byte(jsonentry))
+		// write meta data
+		err = bucket.Put([]byte(entry.Key), []byte(pbentry))
+		if err != nil {
+			return fmt.Errorf("failed to insert data: %w", err)
+		}
+
+		// create data bucket
+		databucket, err := root.CreateBucketIfNotExists([]byte("data"))
+		if err != nil {
+			return fmt.Errorf("failed to create DB data sub bucket: %w", err)
+		}
+
+		// write value
+		err = databucket.Put([]byte(entry.Key), attr.Val)
 		if err != nil {
 			return fmt.Errorf("failed to insert data: %w", err)
 		}
@@ -266,20 +274,47 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 	entry := DbEntry{}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(db.Bucket))
+		// root bucket
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
+
+		// get meta sub bucket
+		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
 
-		jsonentry := bucket.Get([]byte(attr.Key))
-		if jsonentry == nil {
-			// FIXME: shall we return a key not found error?
-			return nil
+		// retrieve meta data
+		pbentry := bucket.Get([]byte(attr.Key))
+		if pbentry == nil {
+			return fmt.Errorf("no such key: %s", attr.Key)
 		}
 
-		if err := json.Unmarshal(jsonentry, &entry); err != nil {
-			return fmt.Errorf("failed to unmarshal from json: %w", err)
+		// put into struct
+		if err := proto.Unmarshal(pbentry, &entry); err != nil {
+			return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 		}
+
+		// get data sub bucket
+		databucket := root.Bucket([]byte("data"))
+		if databucket == nil {
+			return fmt.Errorf("failed to retrieve data sub bucket")
+		}
+
+		// retrieve actual data value
+		value := databucket.Get([]byte(attr.Key))
+		if len(value) == 0 {
+			return fmt.Errorf("no such key: %s", attr.Key)
+		}
+
+		// we  need to make a  copy of it, otherwise  we'll get an
+		// "unexpected fault address" error
+		vc := make([]byte, len(value))
+		copy(vc, value)
+
+		entry.Value = vc
 
 		return nil
 	})
@@ -317,7 +352,7 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 		return "", err
 	}
 
-	if attr.Val == "" {
+	if len(attr.Val) == 0 {
 		return "", errors.New("empty json file")
 	}
 
@@ -345,21 +380,40 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 	defer db.Close()
 
 	err := db.DB.Update(func(tx *bolt.Tx) error {
-		// insert data
-		bucket, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
+		// create root bucket
+		root, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
 		if err != nil {
-			return fmt.Errorf("failed to create bucket: %w", err)
+			return fmt.Errorf("failed to create DB bucket: %w", err)
+		}
+
+		// create meta bucket
+		bucket, err := root.CreateBucketIfNotExists([]byte("meta"))
+		if err != nil {
+			return fmt.Errorf("failed to create DB meta sub bucket: %w", err)
 		}
 
 		for _, entry := range entries {
-			jsonentry, err := json.Marshal(entry)
+			pbentry, err := proto.Marshal(entry)
 			if err != nil {
-				return fmt.Errorf("failed to marshall json: %w", err)
+				return fmt.Errorf("failed to marshall protobuf: %w", err)
 			}
 
-			err = bucket.Put([]byte(entry.Key), []byte(jsonentry))
+			// write meta data
+			err = bucket.Put([]byte(entry.Key), []byte(pbentry))
 			if err != nil {
 				return fmt.Errorf("failed to insert data into DB: %w", err)
+			}
+
+			// create data bucket
+			databucket, err := root.CreateBucketIfNotExists([]byte("data"))
+			if err != nil {
+				return fmt.Errorf("failed to create DB data sub bucket: %w", err)
+			}
+
+			// write value
+			err = databucket.Put([]byte(entry.Key), entry.Value)
+			if err != nil {
+				return fmt.Errorf("failed to insert data: %w", err)
 			}
 		}
 
@@ -416,4 +470,57 @@ func (db *DB) Info() (*DbInfo, error) {
 	})
 
 	return info, err
+}
+
+func (db *DB) Getall(attr *DbAttr) (DbEntries, error) {
+	if err := db.Open(); err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	var entries DbEntries
+
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		// root bucket
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
+
+		// get meta sub bucket
+		bucket := root.Bucket([]byte("meta"))
+		if bucket == nil {
+			return nil
+		}
+
+		// get data sub bucket
+		databucket := root.Bucket([]byte("data"))
+		if databucket == nil {
+			return fmt.Errorf("failed to retrieve data sub bucket")
+		}
+
+		// iterate over all db entries in meta sub bucket
+		err := bucket.ForEach(func(key, pbentry []byte) error {
+			var entry DbEntry
+			if err := proto.Unmarshal(pbentry, &entry); err != nil {
+				return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
+			}
+
+			// retrieve the value from the data sub bucket
+			value := databucket.Get([]byte(entry.Key))
+
+			// we  need to make a  copy of it, otherwise  we'll get an
+			// "unexpected fault address" error
+			vc := make([]byte, len(value))
+			copy(vc, value)
+
+			entry.Value = vc
+			entries = append(entries, &entry)
+
+			return nil
+		})
+
+		return err
+	})
+	return entries, err
 }

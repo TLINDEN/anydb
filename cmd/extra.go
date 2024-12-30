@@ -23,7 +23,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
@@ -38,16 +37,16 @@ func Export(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "export [-o <json filename>]",
-		Short: "Export database to json",
-		Long:  `Export database to json`,
+		Use:   "export -o <json filename>",
+		Short: "Export database to json file",
+		Long:  `Export database to json file`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// errors at this stage do not cause the usage to be shown
 			cmd.SilenceUsage = true
 
 			conf.Mode = "json"
 
-			entries, err := conf.DB.List(&attr)
+			entries, err := conf.DB.Getall(&attr)
 			if err != nil {
 				return err
 			}
@@ -56,7 +55,10 @@ func Export(conf *cfg.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&attr.File, "output", "o", "", "output to file")
+	cmd.PersistentFlags().StringVarP(&attr.File, "output-file", "o", "", "filename or - for STDIN")
+	if err := cmd.MarkPersistentFlagRequired("output-file"); err != nil {
+		panic(err)
+	}
 
 	cmd.Aliases = append(cmd.Aliases, "dump")
 	cmd.Aliases = append(cmd.Aliases, "backup")
@@ -70,7 +72,7 @@ func Import(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "import [<json file>]",
+		Use:   "import -i <json file>",
 		Short: "Import database dump",
 		Long:  `Import database dump`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -87,8 +89,11 @@ func Import(conf *cfg.Config) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&attr.File, "file", "r", "", "Filename or - for STDIN")
+	cmd.PersistentFlags().StringVarP(&attr.File, "import-file", "i", "", "filename or - for STDIN")
 	cmd.PersistentFlags().StringArrayVarP(&attr.Tags, "tags", "t", nil, "tags, multiple allowed")
+	if err := cmd.MarkPersistentFlagRequired("import-file"); err != nil {
+		panic(err)
+	}
 
 	cmd.Aliases = append(cmd.Aliases, "restore")
 
@@ -199,7 +204,7 @@ func Edit(conf *cfg.Config) *cobra.Command {
 				return err
 			}
 
-			if len(entry.Value) == 0 && len(entry.Bin) > 0 {
+			if len(entry.Value) == 0 && entry.Binary {
 				return errors.New("key contains binary uneditable content")
 			}
 
@@ -216,12 +221,7 @@ func Edit(conf *cfg.Config) *cobra.Command {
 					return err
 				}
 
-				if utf8.ValidString(string(clear)) {
-					entry.Value = string(clear)
-				} else {
-					entry.Bin = clear
-				}
-
+				entry.Value = clear
 				entry.Encrypted = false
 			}
 
@@ -231,7 +231,7 @@ func Edit(conf *cfg.Config) *cobra.Command {
 			// save file to a temp file, call the editor with it, read
 			// it  back in and  compare the content with  the original
 			// one
-			newcontent, err := editContent(editor, entry.Value)
+			newcontent, err := editContent(editor, string(entry.Value))
 			if err != nil {
 				return err
 			}
@@ -241,7 +241,7 @@ func Edit(conf *cfg.Config) *cobra.Command {
 				Key:       attr.Key,
 				Tags:      attr.Tags,
 				Encrypted: attr.Encrypted,
-				Val:       newcontent,
+				Val:       []byte(newcontent),
 			}
 
 			// encrypt if needed

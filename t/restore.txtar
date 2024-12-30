@@ -23,10 +23,10 @@ exec anydb -f test.db export -o backup.json
 stdout 'database contents exported to backup.json'
 
 # import into new db
-exec anydb -f new.db import -r backup.json
+exec anydb -f new.db import -i backup.json
 stdout 'imported.*entries'
 
 # check contents
-exec anydb -f new.db list
+exec anydb -f new.db list bar -s
 stdout foo.*bar
 
