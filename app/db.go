@@ -95,7 +95,13 @@ func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
 	var filter *regexp.Regexp
 
 	if len(attr.Args) > 0 {
+		// via cli
 		filter = regexp.MustCompile(attr.Args[0])
+	}
+
+	if len(attr.Key) > 0 {
+		// via api
+		filter = regexp.MustCompile(attr.Key)
 	}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
@@ -120,7 +126,13 @@ func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
 				return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
 			}
 
-			entry.Value = databucket.Get([]byte(entry.Key)) // empty is ok
+			if fulltext {
+				// avoid crash due to access fault
+				value := databucket.Get([]byte(entry.Key)) // empty is ok
+				vc := make([]byte, len(value))
+				copy(vc, value)
+				entry.Value = vc
+			}
 
 			var include bool
 
@@ -327,7 +339,6 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 }
 
 func (db *DB) Del(attr *DbAttr) error {
-	// FIXME: check if it exists prior to just call bucket.Delete()?
 	if err := db.Open(); err != nil {
 		return err
 	}

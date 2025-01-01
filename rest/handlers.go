@@ -44,7 +44,6 @@ func RestList(c *fiber.Ctx, conf *cfg.Config) error {
 	attr := new(app.DbAttr)
 
 	if len(c.Body()) > 0 {
-
 		if err := c.BodyParser(attr); err != nil {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
 				"errors": err.Error(),
@@ -54,7 +53,7 @@ func RestList(c *fiber.Ctx, conf *cfg.Config) error {
 	}
 
 	// get list
-	entries, err := conf.DB.List(attr, false)
+	entries, err := conf.DB.List(attr, attr.Fulltext)
 	if err != nil {
 		return JsonStatus(c, fiber.StatusForbidden,
 			"Unable to list keys: "+err.Error())

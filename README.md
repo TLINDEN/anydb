@@ -154,6 +154,11 @@ curl localhost:8787/anydb/v1/foo
 # list keys
 curl localhost:8787/anydb/v1/
 
+# same, but do a full text search by content, searching for "foo"
+curl -X POST http://127.0.0.1:8787/anydb/v1/ \
+   -H 'Content-Type: application/json'
+   -d '{"key":"foo", "fulltext": true}'
+
 # as you might correctly suspect you can store multi-line values or
 # the content of text files. but what to do if you want to change it?
 # here's one way:

@@ -182,7 +182,7 @@ func List(conf *cfg.Config) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "list  [<filter-regex> | -t <tag> ] [-m <mode>] [-nNif] [-T <tpl>]",
+		Use:   "list  [<filter-regex> | -t <tag> ] [-m <mode>] [-nNis] [-T <tpl>]",
 		Short: "List database contents",
 		Long:  `List database contents`,
 		RunE: func(cmd *cobra.Command, args []string) error {

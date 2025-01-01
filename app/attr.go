@@ -33,6 +33,9 @@ type DbAttr struct {
 	File      string
 	Encrypted bool
 	Binary    bool
+
+	// conf flags, needed for incoming rest requests
+	Fulltext bool
 }
 
 // check if value  is to be read  from a file or  stdin, setup preview

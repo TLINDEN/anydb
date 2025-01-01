@@ -42,6 +42,11 @@ func Runserver(conf *cfg.Config, args []string) error {
 			return RestList(c, conf)
 		})
 
+		api.Post("/", func(c *fiber.Ctx) error {
+			// same thing as above but allows to supply parameters, see app.Dbattr{}
+			return RestList(c, conf)
+		})
+
 		api.Get("/:key", func(c *fiber.Ctx) error {
 			return RestGet(c, conf)
 		})
@@ -78,7 +83,7 @@ func SetupServer(conf *cfg.Config) *fiber.App {
 	})
 
 	router.Use(logger.New(logger.Config{
-          Format:        "${pid} ${ip}:${port} ${status} - ${method} ${path}\n",
+		Format:        "${pid} ${ip}:${port} ${status} - ${method} ${path}\n",
 		DisableColors: true,
 	}))
 

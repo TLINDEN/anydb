@@ -33,7 +33,6 @@ import (
 )
 
 func List(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {
-	// FIXME: call sort here
 	switch conf.Mode {
 	case "wide", "", "table":
 		return ListTable(writer, conf, entries)
