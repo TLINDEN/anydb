@@ -59,7 +59,7 @@ buildlocal:
 
 # binaries are being built by ci workflow on tag creation
 release:
-	gh release create $(version) --generate-notes releases/*
+	gh release create $(version) --generate-notes
 
 install: buildlocal
 	install -d -o $(UID) -g $(GID) $(PREFIX)/bin
