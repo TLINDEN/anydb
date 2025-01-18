@@ -21,10 +21,18 @@ jobs:
         run: go version
 
       - name: Display the release tag
-        run: echo ${{ github.event.release.tag_name }}
+        run: echo ${{ github.ref_name}}
 
       - name: Build the executables
-        run: ./mkrel.sh anydb ${{ github.event.release.tag_name }}
+        run: ./mkrel.sh anydb ${{ github.ref_name}}
 
       - name: List the executables
         run: ls -l ./releases
+
+      - name: Upload the binaries
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+          file: ./releases/*
+          file_glob: true
