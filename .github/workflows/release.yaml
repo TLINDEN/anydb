@@ -17,12 +17,6 @@ jobs:
         with:
           go-version: 1.22.11
 
-      - name: Display the version of go that we have installed
-        run: go version
-
-      - name: Display the release tag
-        run: echo ${{ github.ref_name}}
-
       - name: Build the executables
         run: ./mkrel.sh anydb ${{ github.ref_name}}
 

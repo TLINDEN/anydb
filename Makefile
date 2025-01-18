@@ -57,8 +57,8 @@ app/dbentry.pb.go: app/dbentry.proto
 buildlocal:
 	go build -ldflags "-X 'github.com/tlinden/anydb/cfg.VERSION=$(VERSION)'"
 
+# binaries are being built by ci workflow on tag creation
 release:
-	./mkrel.sh $(tool) $(version)
 	gh release create $(version) --generate-notes releases/*
 
 install: buildlocal
