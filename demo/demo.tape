@@ -1,3 +1,5 @@
+# -*-sh-*-
+
 Output demo.gif
 Set FontSize 20
 Set Width 1200
@@ -189,14 +191,14 @@ Type `anydb ls -m template -T "{{ .Value }}"`
 Enter
 Sleep 4s
 
-Type@0 "# maybe you want to digest the item in a shell script? also"
-Enter
-Type@0 "# note, that both the list and get commands support templates"
-Enter
-Sleep 1s
-Type `eval $(anydb get kitty -m template -T "value='{{ .Value }}'"); echo "value: $value"`
-Enter
-Sleep 4s
+# Type@0 "# maybe you want to digest the item in a shell script? also"
+# Enter
+# Type@0 "# note, that both the list and get commands support templates"
+# Enter
+# Sleep 1s
+# Type `eval $(anydb get kitty -m template -T "value='{{ .Value }}'"); echo "value: $value"`
+# Enter
+# Sleep 4s
 
 Type@0 "# sometimes you need to know some details about the current database"
 Enter
