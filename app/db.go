@@ -61,6 +61,24 @@ type DbTag struct {
 
 const BucketData string = "data"
 
+func GetDbFile(file string) string {
+	if file != "" {
+		return file
+	}
+
+	file = os.Getenv("ANYDB_DB")
+	if file != "" {
+		return file
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	return filepath.Join(home, ".config", "anydb", "default.db")
+}
+
 func New(file string, bucket string, debug bool) (*DB, error) {
 	return &DB{Debug: debug, Dbfile: file, Bucket: bucket}, nil
 }

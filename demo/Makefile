@@ -1,9 +1,11 @@
-.PHONY: all clean
+.PHONY: all clean check
 
 
-all:
-	rm -vf local.db*
+all: clean check
 	env PATH=..:$(PATH) ANYDB_DB=local.db vhs demo.tape
 
 clean:
 	rm -vf *.db* *.gif *.json
+
+check:
+	ls -l ../anydb
