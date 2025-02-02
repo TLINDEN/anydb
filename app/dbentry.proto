@@ -16,5 +16,5 @@ message DbEntry {
   uint64 Size = 6;
   bool Encrypted = 7;
   bool Binary = 8;
-  bytes Value = 9;
+  string Value = 9;
 }

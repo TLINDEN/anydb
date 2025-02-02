@@ -43,7 +43,7 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 			if isatty {
 				fmt.Println("binary data omitted")
 			} else {
-				os.Stdout.Write(entry.Value)
+				os.Stdout.WriteString(entry.Value)
 			}
 		} else {
 			fmt.Print(string(entry.Value))
@@ -85,7 +85,7 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 	}
 
 	// actually write file content
-	_, err = fileHandle.Write(entry.Value)
+	_, err = fileHandle.WriteString(entry.Value)
 
 	if !entry.Binary {
 		if entry.Value[entry.Size-1] != '\n' {

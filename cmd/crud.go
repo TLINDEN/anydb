@@ -118,12 +118,12 @@ func Get(conf *cfg.Config) *cobra.Command {
 					return err
 				}
 
-				clear, err := app.Decrypt(pass, entry.Value)
+				clear, err := app.Decrypt(pass, []byte(entry.Value))
 				if err != nil {
 					return err
 				}
 
-				entry.Value = clear
+				entry.Value = string(clear)
 				entry.Encrypted = false
 			}
 

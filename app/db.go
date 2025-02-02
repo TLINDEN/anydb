@@ -149,7 +149,7 @@ func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
 				value := databucket.Get([]byte(entry.Key)) // empty is ok
 				vc := make([]byte, len(value))
 				copy(vc, value)
-				entry.Value = vc
+				entry.Value = string(vc)
 			}
 
 			var include bool
@@ -344,7 +344,7 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 		vc := make([]byte, len(value))
 		copy(vc, value)
 
-		entry.Value = vc
+		entry.Value = string(vc)
 
 		return nil
 	})
@@ -440,7 +440,7 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 			}
 
 			// write value
-			err = databucket.Put([]byte(entry.Key), entry.Value)
+			err = databucket.Put([]byte(entry.Key), []byte(entry.Value))
 			if err != nil {
 				return fmt.Errorf("failed to insert data: %w", err)
 			}
@@ -543,7 +543,7 @@ func (db *DB) Getall(attr *DbAttr) (DbEntries, error) {
 			vc := make([]byte, len(value))
 			copy(vc, value)
 
-			entry.Value = vc
+			entry.Value = string(vc)
 			entries = append(entries, &entry)
 
 			return nil
