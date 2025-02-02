@@ -103,3 +103,9 @@ lint:
 lint-full:
 	golangci-lint run --enable-all --exclude-use-default --disable exhaustivestruct,exhaustruct,depguard,interfacer,deadcode,golint,structcheck,scopelint,varcheck,ifshort,maligned,nosnakecase,godot,funlen,gofumpt,cyclop,noctx,gochecknoglobals,paralleltest,forbidigo,gci,godox,goimports,ireturn,stylecheck,testpackage,mirror,nestif,revive,goerr113,gomnd
 	gocritic check -enableAll *.go
+
+demo:
+	make -C demo demo
+
+
+.PHONY: demo
