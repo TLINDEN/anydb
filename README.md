@@ -34,11 +34,11 @@ And I wrote a very similar [tool](https://www.daemon.de/projects/dbtool/) 24 yea
 
 **anydb** can do all the things you can do with skate:
 
-![simple demo](https://github.com/TLINDEN/anydb/blob/demo/simple.gif)
+![simple demo](https://github.com/TLINDEN/anydb/blob/main/demo/intro.gif)
 
 However, there are more features than just that!
 
-![advanced demo](https://github.com/TLINDEN/anydb/blob/demo/advanced.gif)
+![advanced demo](https://github.com/TLINDEN/anydb/blob/main/demo/advanced.gif)
 
 ## Installation
 
