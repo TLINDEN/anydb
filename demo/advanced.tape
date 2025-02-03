@@ -139,8 +139,9 @@ Type "# using template output mode you can freely design how to print stuff"
 Enter
 Type "# here, we print the values in CSV format ONLY if they have some tag"
 Enter
+Type "# also note, that we're printing the creation timestamp as epoch"
 Sleep 1s
-Type `anydb ls -m template -T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created}}{{ end }}"`
+Type `anydb ls -m template -T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created.AsTime.Unix}}{{ end }}"`
 Enter
 Sleep 3s
 
