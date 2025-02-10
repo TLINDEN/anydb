@@ -8,8 +8,8 @@
 [![Documentation](https://img.shields.io/badge/manpage-documentation-blue)](https://github.com/TLINDEN/anydb/blob/master/anydb.pod)
 
 > [!CAUTION]
-> Version 0.1.3 introduced a regression bug, which caused
-> the encryption feature not to work correctly anymore.
+> Version 0.1.3 introduced a [regression bug](https://github.com/TLINDEN/anydb/issues/19),
+> which caused the encryption feature not to work correctly anymore.
 > If you are using anydb 0.1.3, you are urgently advised to
 > upgrade to 0.2.0
 
