@@ -124,6 +124,7 @@ func Get(conf *cfg.Config) *cobra.Command {
 				}
 
 				entry.Value = string(clear)
+				entry.Size = uint64(len(entry.Value))
 				entry.Encrypted = false
 			}
 

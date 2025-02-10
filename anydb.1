@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "ANYDB 1"
-.TH ANYDB 1 "2025-01-01" "1" "User Commands"
+.TH ANYDB 1 "2025-02-10" "1" "User Commands"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -608,19 +608,23 @@ required, the template provided applies to every matching entry
 separatley.
 .PP
 The following template variables can be used:
-.IP "\fBKey\fR \- string" 4
-.IX Item "Key - string"
+.IP "\fB.Key\fR \- string" 4
+.IX Item ".Key - string"
 .PD 0
-.IP "\fBValue\fR \- string" 4
-.IX Item "Value - string"
-.IP "\fBBin\fR \- []byte" 4
-.IX Item "Bin - []byte"
-.IP "\fBCreated\fR \- time.Time" 4
-.IX Item "Created - time.Time"
-.IP "\fBTags\fR \- []string" 4
-.IX Item "Tags - []string"
-.IP "\fBEncrypted\fR bool" 4
-.IX Item "Encrypted bool"
+.IP "\fB.Value\fR \- string" 4
+.IX Item ".Value - string"
+.IP "\fB.Bin\fR \- []byte" 4
+.IX Item ".Bin - []byte"
+.IP "\fB.Created\fR \- timestamp.Time" 4
+.IX Item ".Created - timestamp.Time"
+.PD
+To retrieve a string representation of the timestamp, use \f(CW\*(C`.Created.AsTime\*(C'\fR.
+If you need a unix timestamp since epoch, use \f(CW\*(C`.Created.Unix\*(C'\fR.
+.IP "\fB.Tags\fR \- []string" 4
+.IX Item ".Tags - []string"
+.PD 0
+.IP "\fB.Encrypted\fR bool" 4
+.IX Item ".Encrypted bool"
 .PD
 .PP
 Prepend a single dot (\*(L".\*(R") before each variable name.
@@ -637,14 +641,14 @@ Format the list in a way so that is possible to evaluate it in a
 shell:
 .PP
 .Vb 2
-\&    eval $(anydb get foo \-m template \-T "key=\*(Aq{{ .Key }}\*(Aq value=\*(Aq{{ .Value }}\*(Aq ts=\*(Aq{{ .Created}}\*(Aq")
-\&    echo "Key: $key, Value: $value"
+\&    eval $(anydb get foo \-m template \-T "key=\*(Aq{{ .Key }}\*(Aq value=\*(Aq{{ .Value }}\*(Aq ts=\*(Aq{{ .Created.AsTime}}\*(Aq")
+\&    echo "Key: $key, Value: $value, When: $ts"
 .Ve
 .PP
 Print the values in \s-1CSV\s0 format \s-1ONLY\s0 if they have some tag:
 .PP
 .Vb 1
-\&    anydb list \-m template \-T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created}}{{ end }}"
+\&    anydb list \-m template \-T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created.AsTime}}{{ end }}"
 .Ve
 .SH "CONFIGURATION"
 .IX Header "CONFIGURATION"

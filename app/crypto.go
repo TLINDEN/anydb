@@ -20,6 +20,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"syscall"
 
@@ -34,7 +35,7 @@ const (
 	ArgonParallel uint8  = 2
 	ArgonSaltLen  int    = 16
 	ArgonKeyLen   uint32 = 32
-	B64SaltLen    int    = 22
+	B64SaltLen    int    = 16 //22
 )
 
 type Key struct {
@@ -84,7 +85,11 @@ func DeriveKey(password []byte, salt []byte) (*Key, error) {
 		ArgonKeyLen,
 	)
 
-	return &Key{Key: hash, Salt: salt}, nil
+	key := &Key{Key: hash, Salt: salt}
+
+	slog.Debug("derived key", "key", string(key.Key), "salt", string(key.Salt))
+
+	return key, nil
 }
 
 // Retrieve a random chunk of given size
@@ -124,10 +129,13 @@ func Encrypt(pass []byte, attr *DbAttr) error {
 
 	cipher := aead.Seal(nonce, nonce, attr.Val, nil)
 
-	attr.Val = append(attr.Val, key.Salt...)
+	attr.Val = key.Salt
 	attr.Val = append(attr.Val, cipher...)
 
 	attr.Encrypted = true
+	attr.Preview = "<encrypted-content>"
+
+	slog.Debug("encrypted attr", "salt", string(key.Salt), "cipher", string(attr.Val))
 
 	return nil
 }
@@ -156,5 +164,12 @@ func Decrypt(pass []byte, cipherb []byte) ([]byte, error) {
 
 	nonce, ciphertext := cipher[:aead.NonceSize()], cipher[aead.NonceSize():]
 
-	return aead.Open(nil, nonce, ciphertext, nil)
+	clear, err := aead.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	slog.Debug("decrypted attr", "salt", string(key.Salt), "clear", string(clear))
+
+	return clear, err
 }
