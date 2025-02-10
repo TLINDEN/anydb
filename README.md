@@ -7,6 +7,12 @@
 [![GitHub release](https://img.shields.io/github/v/release/tlinden/anydb?color=%2300a719)](https://github.com/TLINDEN/anydb/releases/latest)
 [![Documentation](https://img.shields.io/badge/manpage-documentation-blue)](https://github.com/TLINDEN/anydb/blob/master/anydb.pod)
 
+> [!CAUTION]
+> Version 0.1.3 introduced a regression bug, which caused
+> the encryption feature not to work correctly anymore.
+> If you are using anydb 0.1.3, you are urgently advised to
+> upgrade to 0.2.0
+
 Anydb is a simple to use commandline tool to store anything you'd
 like, even binary files etc. It is a re-implementation of
 [skate](https://github.com/charmbracelet/skate) for the following
