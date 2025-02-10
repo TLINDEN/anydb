@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -84,6 +85,8 @@ func New(file string, bucket string, debug bool) (*DB, error) {
 }
 
 func (db *DB) Open() error {
+	slog.Debug("opening DB", "dbfile", db.Dbfile)
+
 	if _, err := os.Stat(filepath.Dir(db.Dbfile)); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Dir(db.Dbfile), 0700); err != nil {
 			return err
@@ -128,10 +131,14 @@ func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
 			return nil
 		}
 
+		slog.Debug("opened root bucket", "root", root)
+
 		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
+
+		slog.Debug("opened buckets", "root", root, "data", bucket)
 
 		databucket := root.Bucket([]byte("data"))
 		if databucket == nil {
@@ -215,6 +222,7 @@ func (db *DB) Set(attr *DbAttr) error {
 	// check if the  entry already exists and if yes,  check if it has
 	// any  tags. if so,  we initialize  our update struct  with these
 	// tags unless it has new tags configured.
+	// FIXME: use Get()
 	err := db.DB.View(func(tx *bolt.Tx) error {
 		root := tx.Bucket([]byte(db.Bucket))
 		if root == nil {
@@ -225,6 +233,8 @@ func (db *DB) Set(attr *DbAttr) error {
 		if bucket == nil {
 			return nil
 		}
+
+		slog.Debug("opened buckets", "root", root, "data", bucket)
 
 		pbentry := bucket.Get([]byte(entry.Key))
 		if pbentry == nil {
@@ -266,6 +276,8 @@ func (db *DB) Set(attr *DbAttr) error {
 		if err != nil {
 			return fmt.Errorf("failed to create DB meta sub bucket: %w", err)
 		}
+
+		slog.Debug("opened/created buckets", "root", root, "data", bucket)
 
 		// write meta data
 		err = bucket.Put([]byte(entry.Key), []byte(pbentry))
@@ -315,6 +327,8 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 		if bucket == nil {
 			return nil
 		}
+
+		slog.Debug("opened buckets", "root", root, "data", bucket)
 
 		// retrieve meta data
 		pbentry := bucket.Get([]byte(attr.Key))
@@ -369,6 +383,8 @@ func (db *DB) Del(attr *DbAttr) error {
 			return nil
 		}
 
+		slog.Debug("opened buckets", "data", bucket)
+
 		return bucket.Delete([]byte(attr.Key))
 	})
 
@@ -420,6 +436,8 @@ func (db *DB) Import(attr *DbAttr) (string, error) {
 		if err != nil {
 			return fmt.Errorf("failed to create DB meta sub bucket: %w", err)
 		}
+
+		slog.Debug("opened buckets", "root", root, "data", bucket)
 
 		for _, entry := range entries {
 			pbentry, err := proto.Marshal(entry)
@@ -527,6 +545,8 @@ func (db *DB) Getall(attr *DbAttr) (DbEntries, error) {
 		if databucket == nil {
 			return fmt.Errorf("failed to retrieve data sub bucket")
 		}
+
+		slog.Debug("opened buckets", "root", root, "data", bucket)
 
 		// iterate over all db entries in meta sub bucket
 		err := bucket.ForEach(func(key, pbentry []byte) error {

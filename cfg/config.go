@@ -26,7 +26,7 @@ import (
 	"github.com/tlinden/anydb/common"
 )
 
-var Version string = "v0.1.4"
+var Version string = "v0.2.0"
 
 type BucketConfig struct {
 	Encrypt bool

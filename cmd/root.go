@@ -19,13 +19,15 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 
-	"github.com/alecthomas/repr"
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
+	"github.com/tlinden/yadu"
 )
 
 func completion(cmd *cobra.Command, mode string) error {
@@ -67,14 +69,6 @@ func Execute() {
 		Short: "anydb",
 		Long:  `A personal key value store`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			dbfile := app.GetDbFile(conf.Dbfile)
-
-			db, err := app.New(dbfile, conf.Dbbucket, conf.Debug)
-			if err != nil {
-				return err
-			}
-
-			conf.DB = db
 
 			var configs []string
 			if configfile != "" {
@@ -88,9 +82,34 @@ func Execute() {
 			}
 
 			if conf.Debug {
-				repr.Println(conf)
+				buildInfo, _ := debug.ReadBuildInfo()
+				opts := &yadu.Options{
+					Level:     slog.LevelDebug,
+					AddSource: true,
+				}
+
+				slog.SetLogLoggerLevel(slog.LevelDebug)
+
+				handler := yadu.NewHandler(os.Stdout, opts)
+				debuglogger := slog.New(handler).With(
+					slog.Group("program_info",
+						slog.Int("pid", os.Getpid()),
+						slog.String("go_version", buildInfo.GoVersion),
+					),
+				)
+				slog.SetDefault(debuglogger)
+
+				slog.Debug("parsed config", "conf", conf)
 			}
 
+			dbfile := app.GetDbFile(conf.Dbfile)
+
+			db, err := app.New(dbfile, conf.Dbbucket, conf.Debug)
+			if err != nil {
+				return err
+			}
+
+			conf.DB = db
 			return nil
 		},
 
