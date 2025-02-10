@@ -411,12 +411,16 @@ TEMPLATES
 
     The following template variables can be used:
 
-    Key - string
-    Value - string
-    Bin - []byte
-    Created - time.Time
-    Tags - []string
-    Encrypted bool
+    .Key - string
+    .Value - string
+    .Bin - []byte
+    .Created - timestamp.Time
+        To retrieve a string representation of the timestamp, use
+        ".Created.AsTime". If you need a unix timestamp since epoch, use
+        ".Created.Unix".
+
+    .Tags - []string
+    .Encrypted bool
 
     Prepend a single dot (".") before each variable name.
 
@@ -428,12 +432,12 @@ TEMPLATES
 
     Format the list in a way so that is possible to evaluate it in a shell:
 
-        eval $(anydb get foo -m template -T "key='{{ .Key }}' value='{{ .Value }}' ts='{{ .Created}}'")
-        echo "Key: $key, Value: $value"
+        eval $(anydb get foo -m template -T "key='{{ .Key }}' value='{{ .Value }}' ts='{{ .Created.AsTime}}'")
+        echo "Key: $key, Value: $value, When: $ts"
 
     Print the values in CSV format ONLY if they have some tag:
 
-        anydb list -m template -T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created}}{{ end }}"
+        anydb list -m template -T "{{ if .Tags }}{{ .Key }},{{ .Value }},{{ .Created.AsTime}}{{ end }}"
 
 CONFIGURATION
     Anydb looks at the following locations for a configuration file, in that
