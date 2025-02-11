@@ -16,66 +16,66 @@
 # 
 
 # simple entry
-exec ./anydb -f test.db set foo bar
+exec .\anydb -f test.db set foo bar
 
 # single entry uc()
-exec ./anydb -f test.db set MUCHAS gracias
+exec .\anydb -f test.db set MUCHAS gracias
 
 # entry with tags
-exec ./anydb -f test.db set color grey -t flower,plant
+exec .\anydb -f test.db set color grey -t flower,plant
 
 # simple list
-exec ./anydb -f test.db list
+exec .\anydb -f test.db list
 stdout foo.*bar
 
 # wide list
-exec ./anydb -f test.db list -m wide
+exec .\anydb -f test.db list -m wide
 stdout 'plant.*now.*grey'
 
 # list tagged
-exec ./anydb -f test.db list -t flower
+exec .\anydb -f test.db list -t flower
 ! stdout bar
 
 # list with filter
-exec ./anydb -f test.db list b.r -s
+exec .\anydb -f test.db list b.r -s
 stdout bar
 
 # list with -i filter
-exec ./anydb -f test.db list -is mucha 
+exec .\anydb -f test.db list -is mucha 
 stdout mucha
 
 # get single entry
-exec ./anydb -f test.db get color
+exec .\anydb -f test.db get color
 stdout grey
 
 # modify
-exec ./anydb -f test.db set foo blah
+exec .\anydb -f test.db set foo blah
 
 # check modified
-exec ./anydb -f test.db get foo
+exec .\anydb -f test.db get foo
 stdout blah
 
 # modify tagged
-exec ./anydb -f test.db set color grey -t butterfly
+exec .\anydb -f test.db set color grey -t butterfly
 
 # check modified tagged
-exec ./anydb -f test.db list -t butterfly
+exec .\anydb -f test.db list -t butterfly
 stdout grey
 
 # check modified tagged, make sure
-exec ./anydb -f test.db list -t flower
+exec .\anydb -f test.db list -t flower
 ! stdout grey
 
 # check json output
-exec ./anydb -f test.db list -m json
+exec .\anydb -f test.db list -m json
 stdout '^\[\{'
 
-exec ./anydb -f test.db get color -m json
+exec .\anydb -f test.db get color -m json
 stdout '^\{'
 
 # delete entry
-exec ./anydb -f test.db del foo
+exec .\anydb -f test.db del foo
 
 # check deleted
-exec ./anydb -f test.db list
+exec .\anydb -f test.db list
 ! stdout bar

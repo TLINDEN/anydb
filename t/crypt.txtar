@@ -16,22 +16,22 @@
 # 
 
 # encrypt something
-exec env ANYDB_PASSWORD=12345 ./anydb -f test.db set -e secret eshishinusan
+exec env ANYDB_PASSWORD=12345 .\anydb -f test.db set -e secret eshishinusan
 
 # retrieve it
-exec env ANYDB_PASSWORD=12345 ./anydb -f test.db get secret
+exec env ANYDB_PASSWORD=12345 .\anydb -f test.db get secret
 stdout eshishinusan
 
 # but has it really been encrypted?
-! exec env ANYDB_PASSWORD=8d8d8 ./anydb -f test.db get secret 
+! exec env ANYDB_PASSWORD=8d8d8 .\anydb -f test.db get secret 
 ! stdout eshishinusan
 stderr 'message authentication failed'
 
 # what about the listing
-exec ./anydb -f test.db ls -l
+exec .\anydb -f test.db ls -l
 stdout 'encrypted-content'
 ! stdout eshishinusan
 
 # and the export?
-exec ./anydb -f test.db export -o -
+exec .\anydb -f test.db export -o -
 ! stdout eshishinusan
