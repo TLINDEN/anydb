@@ -157,6 +157,7 @@ func Execute() {
 	rootCmd.AddCommand(Man(&conf))
 	rootCmd.AddCommand(Info(&conf))
 	rootCmd.AddCommand(Edit(&conf))
+	rootCmd.AddCommand(Shell(&conf))
 
 	err = rootCmd.Execute()
 	if err != nil {

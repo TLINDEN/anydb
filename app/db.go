@@ -60,6 +60,17 @@ type DbTag struct {
 	Keys []string `json:"key"`
 }
 
+// required for ui
+func (entry DbEntry) FilterValue() string {
+	return entry.Preview
+}
+func (entry DbEntry) Description() string {
+	return "Val: " + entry.Preview
+}
+func (entry DbEntry) Title() string {
+	return "Key: " + entry.Key
+}
+
 const BucketData string = "data"
 
 func GetDbFile(file string) string {

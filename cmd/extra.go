@@ -24,11 +24,13 @@ import (
 	"os"
 	"os/exec"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
 	"github.com/tlinden/anydb/output"
 	"github.com/tlinden/anydb/rest"
+	"github.com/tlinden/anydb/ui"
 )
 
 func Export(conf *cfg.Config) *cobra.Command {
@@ -323,4 +325,32 @@ func editContent(editor string, content string) (string, error) {
 	}
 
 	return newcontentstr, nil
+}
+
+func Shell(conf *cfg.Config) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "shell",
+		Short: "shell",
+		Long:  `interactive ui`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// errors at this stage do not cause the usage to be shown
+			cmd.SilenceUsage = true
+
+			entries, err := conf.DB.List(&app.DbAttr{}, conf.Fulltext)
+			if err != nil {
+				return err
+			}
+
+			p := tea.NewProgram(ui.NewModel(conf, entries), tea.WithAltScreen())
+			if _, err := p.Run(); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+
+	cmd.PersistentFlags().BoolVarP(&conf.NoHumanize, "no-human", "N", false, "do not translate to human readable values")
+
+	return cmd
 }
