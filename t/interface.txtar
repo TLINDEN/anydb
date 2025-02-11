@@ -17,9 +17,9 @@
 
 # check default outputs
 
-exec .\anydb -v
-stdout 'This is .\anydb version'
+exec ./anydb$exe -v
+stdout 'This is ./anydb$exe version'
 
-! exec .\anydb
+! exec ./anydb$exe
 stderr 'Available Commands:'
 
