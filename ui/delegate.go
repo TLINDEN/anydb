@@ -2,6 +2,7 @@ package ui
 
 import (
 	"log"
+	"log/slog"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -16,9 +17,11 @@ func newItemDelegate(keys *delegateKeyMap, config *cfg.Config) list.DefaultDeleg
 	d.UpdateFunc = func(msg tea.Msg, m *list.Model) tea.Cmd {
 		var title string
 
-		if entry, ok := m.SelectedItem().(app.DbEntry); ok {
+		if entry, ok := m.SelectedItem().(item); ok {
 			title = entry.Title()
+			slog.Debug("active entry", "entry", title)
 		} else {
+			slog.Debug("no active entry")
 			return nil
 		}
 

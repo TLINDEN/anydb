@@ -25,15 +25,6 @@ import (
 	"github.com/tlinden/anydb/cfg"
 )
 
-type model struct {
-	conf         *cfg.Config
-	quitting     bool
-	err          error
-	list         list.Model
-	keys         *listKeyMap
-	delegateKeys *delegateKeyMap
-}
-
 var (
 	appStyle = lipgloss.NewStyle().Padding(1, 2)
 
@@ -47,6 +38,39 @@ var (
 				Render
 )
 
+type Loader struct {
+	items []list.Item
+	conf  *cfg.Config
+}
+
+func (loader *Loader) Update() error {
+	entries, err := loader.conf.DB.List(&app.DbAttr{}, loader.conf.Fulltext)
+	if err != nil {
+		return err
+	}
+
+	loader.items = nil
+
+	for _, entry := range entries {
+		loader.items = append(loader.items, item{
+			title:       entry.Key,
+			description: entry.Preview,
+		})
+	}
+
+	return nil
+}
+
+type model struct {
+	conf         *cfg.Config
+	loader       *Loader
+	quitting     bool
+	err          error
+	list         list.Model
+	keys         *listKeyMap
+	delegateKeys *delegateKeyMap
+}
+
 type listKeyMap struct {
 	toggleSpinner    key.Binding
 	toggleTitleBar   key.Binding
@@ -55,6 +79,15 @@ type listKeyMap struct {
 	toggleHelpMenu   key.Binding
 	insertItem       key.Binding
 }
+
+type item struct {
+	title       string
+	description string
+}
+
+func (i item) Title() string       { return i.title }
+func (i item) Description() string { return i.description }
+func (i item) FilterValue() string { return i.title }
 
 func newListKeyMap() *listKeyMap {
 	return &listKeyMap{
@@ -89,16 +122,16 @@ func NewModel(config *cfg.Config, entries app.DbEntries) model {
 	var (
 		delegateKeys = newDelegateKeyMap()
 		listKeys     = newListKeyMap()
+		loader       = Loader{conf: config}
 	)
 
-	items := []list.Item{}
-	for _, entry := range entries {
-		items = append(items, entry)
+	// Setup list
+	if err := loader.Update(); err != nil {
+		panic(err)
 	}
 
-	// Setup list
 	delegate := newItemDelegate(delegateKeys, config)
-	dbList := list.New(items, delegate, 0, 0)
+	dbList := list.New(loader.items, delegate, 0, 0)
 	dbList.Title = "DB Entries"
 	dbList.Styles.Title = titleStyle
 

@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
+	slogmulti "github.com/samber/slog-multi"
 	"github.com/spf13/cobra"
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
@@ -90,13 +91,25 @@ func Execute() {
 
 				slog.SetLogLoggerLevel(slog.LevelDebug)
 
-				handler := yadu.NewHandler(os.Stdout, opts)
-				debuglogger := slog.New(handler).With(
+				dbg, err := os.Create("debug.log")
+				if err != nil {
+					return err
+				}
+
+				// FIXME: control this with a flag!
+				//outhandler := yadu.NewHandler(os.Stdout, opts)
+				filehandler := yadu.NewHandler(dbg, opts)
+
+				debuglogger := slog.New(slogmulti.Fanout(
+					//outhandler,
+					filehandler,
+				)).With(
 					slog.Group("program_info",
 						slog.Int("pid", os.Getpid()),
 						slog.String("go_version", buildInfo.GoVersion),
 					),
 				)
+
 				slog.SetDefault(debuglogger)
 
 				slog.Debug("parsed config", "conf", conf)
