@@ -25,8 +25,9 @@ jobs:
     - name: checkout
       uses: actions/checkout@v4
 
+    - name: test
+      run: make test
+
     - name: build
       run: go build
 
-    - name: test
-      run: make test
