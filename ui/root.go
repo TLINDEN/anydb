@@ -61,6 +61,11 @@ func (loader *Loader) Update() error {
 	return nil
 }
 
+const (
+	ModeDefault = iota
+	ModeView
+)
+
 type model struct {
 	conf         *cfg.Config
 	loader       *Loader
@@ -69,6 +74,8 @@ type model struct {
 	list         list.Model
 	keys         *listKeyMap
 	delegateKeys *delegateKeyMap
+	mode         int    // mode
+	selected     string // current key to be deleted, viewed or edited
 }
 
 type listKeyMap struct {
@@ -84,6 +91,8 @@ type item struct {
 	title       string
 	description string
 }
+
+type ChoiceMsg string
 
 func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.description }
@@ -154,60 +163,40 @@ func NewModel(config *cfg.Config, entries app.DbEntries) model {
 }
 
 func (m model) Init() tea.Cmd {
+	m.mode = ModeDefault
 	return nil
 }
 
+// Main update function.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		h, v := appStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
-
-	case tea.KeyMsg:
-		// Don't match any of the keys below if we're actively filtering.
-		if m.list.FilterState() == list.Filtering {
-			break
-		}
-
-		switch {
-		case key.Matches(msg, m.keys.toggleSpinner):
-			cmd := m.list.ToggleSpinner()
-			return m, cmd
-
-		case key.Matches(msg, m.keys.toggleTitleBar):
-			v := !m.list.ShowTitle()
-			m.list.SetShowTitle(v)
-			m.list.SetShowFilter(v)
-			m.list.SetFilteringEnabled(v)
-			return m, nil
-
-		case key.Matches(msg, m.keys.toggleStatusBar):
-			m.list.SetShowStatusBar(!m.list.ShowStatusBar())
-			return m, nil
-
-		case key.Matches(msg, m.keys.togglePagination):
-			m.list.SetShowPagination(!m.list.ShowPagination())
-			return m, nil
-
-		case key.Matches(msg, m.keys.toggleHelpMenu):
-			m.list.SetShowHelp(!m.list.ShowHelp())
-			return m, nil
-
-		case key.Matches(msg, m.keys.insertItem):
-			panic(1)
+	// Make sure these keys always quit
+	if msg, ok := msg.(tea.KeyMsg); ok {
+		k := msg.String()
+		if k == "q" || k == "esc" || k == "ctrl+c" {
+			m.quitting = true
+			return m, tea.Quit
 		}
 	}
 
-	// This will also call our delegate's update function.
-	newListModel, cmd := m.list.Update(msg)
-	m.list = newListModel
-	cmds = append(cmds, cmd)
+	// Hand off to subs
+	switch m.mode {
+	case ModeDefault:
+		return m.UpdateList(msg)
+	}
 
-	return m, tea.Batch(cmds...)
+	return nil, nil
 }
 
 func (m model) View() string {
-	return appStyle.Render(m.list.View())
+	if m.quitting {
+		return "\n  See you later!\n\n"
+	}
+
+	// Hand off to subs
+	switch m.mode {
+	case ModeDefault:
+		return appStyle.Render(m.list.View())
+	}
+
+	return ""
 }
