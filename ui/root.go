@@ -19,6 +19,7 @@ package ui
 import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tlinden/anydb/app"
@@ -32,6 +33,12 @@ var (
 			Foreground(lipgloss.Color("#FFFDF5")).
 			Background(lipgloss.Color("#25A065")).
 			Padding(0, 1)
+
+	infoStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Left = "┤"
+		return titleStyle.BorderStyle(b)
+	}()
 
 	statusMessageStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
@@ -76,6 +83,7 @@ type model struct {
 	delegateKeys *delegateKeyMap
 	mode         int    // mode
 	selected     string // current key to be deleted, viewed or edited
+	viewport     viewport.Model
 }
 
 type listKeyMap struct {
@@ -85,6 +93,9 @@ type listKeyMap struct {
 	togglePagination key.Binding
 	toggleHelpMenu   key.Binding
 	insertItem       key.Binding
+	viewItem         key.Binding
+	quit             key.Binding
+	close            key.Binding
 }
 
 type item struct {
@@ -124,6 +135,18 @@ func newListKeyMap() *listKeyMap {
 			key.WithKeys("H"),
 			key.WithHelp("H", "toggle help"),
 		),
+		viewItem: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "view"),
+		),
+		quit: key.NewBinding(
+			key.WithKeys("q", "ctrl-c", "esc"),
+			key.WithHelp("q", "exit"),
+		),
+		close: key.NewBinding(
+			key.WithKeys("q"),
+			key.WithHelp("q", "close pager"),
+		),
 	}
 }
 
@@ -157,6 +180,7 @@ func NewModel(config *cfg.Config, entries app.DbEntries) model {
 
 	return model{
 		list:         dbList,
+		viewport:     viewport.New(20, 40),
 		keys:         listKeys,
 		delegateKeys: delegateKeys,
 	}
@@ -169,19 +193,20 @@ func (m model) Init() tea.Cmd {
 
 // Main update function.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// Make sure these keys always quit
-	if msg, ok := msg.(tea.KeyMsg); ok {
-		k := msg.String()
-		if k == "q" || k == "esc" || k == "ctrl+c" {
-			m.quitting = true
-			return m, tea.Quit
-		}
+	switch msgt := msg.(type) {
+	case tea.WindowSizeMsg:
+		// pre-calculate pager size
+		verticalMarginHeight, _ := m.pagerMargin()
+		m.viewport.Width = msgt.Width
+		m.viewport.Height = msgt.Height - verticalMarginHeight
 	}
 
 	// Hand off to subs
 	switch m.mode {
 	case ModeDefault:
 		return m.UpdateList(msg)
+	case ModeView:
+		return m.UpdatePager(msg)
 	}
 
 	return nil, nil
@@ -196,6 +221,8 @@ func (m model) View() string {
 	switch m.mode {
 	case ModeDefault:
 		return appStyle.Render(m.list.View())
+	case ModeView:
+		return m.ViewPager()
 	}
 
 	return ""

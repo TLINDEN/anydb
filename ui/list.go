@@ -27,6 +27,12 @@ import (
 func (m model) UpdateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
+	// propagate current selection up
+	if entry, ok := m.list.SelectedItem().(item); ok {
+		m.selected = entry.Title()
+		slog.Debug("items", "list", m.selected)
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		h, v := appStyle.GetFrameSize()
@@ -62,6 +68,11 @@ func (m model) UpdateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SetShowHelp(!m.list.ShowHelp())
 			return m, nil
 
+		case key.Matches(msg, m.keys.viewItem):
+			m.mode = ModeView
+			// FIXME: fetch value from DB and set it as content, also add the key as title
+			m.viewport.SetContent(m.selected)
+
 		case key.Matches(msg, m.keys.insertItem):
 			panic(1)
 		}
@@ -70,12 +81,6 @@ func (m model) UpdateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// This will also call our delegate's update function.
 	newListModel, cmd := m.list.Update(msg)
 	m.list = newListModel
-
-	// propagate current selection up
-	if entry, ok := m.list.SelectedItem().(item); ok {
-		m.selected = entry.Title()
-		slog.Debug("items", "list", m.selected)
-	}
 
 	cmds = append(cmds, cmd)
 

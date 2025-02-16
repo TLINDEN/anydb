@@ -28,8 +28,8 @@ func newItemDelegate(keys *delegateKeyMap, config *cfg.Config) list.DefaultDeleg
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
-			case key.Matches(msg, keys.choose):
-				return m.NewStatusMessage(statusMessageStyle("You chose " + title))
+			// case key.Matches(msg, keys.choose):
+			// 	return m.NewStatusMessage(statusMessageStyle("You chose " + title))
 
 			case key.Matches(msg, keys.remove):
 				if err := config.DB.Del(&app.DbAttr{Key: title}); err != nil {
@@ -69,7 +69,7 @@ type delegateKeyMap struct {
 // is entirely optional.
 func (d delegateKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
-		d.choose,
+		// d.choose,
 		d.remove,
 	}
 }
@@ -79,7 +79,7 @@ func (d delegateKeyMap) ShortHelp() []key.Binding {
 func (d delegateKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{
-			d.choose,
+			// d.choose,
 			d.remove,
 		},
 	}
@@ -87,10 +87,10 @@ func (d delegateKeyMap) FullHelp() [][]key.Binding {
 
 func newDelegateKeyMap() *delegateKeyMap {
 	return &delegateKeyMap{
-		choose: key.NewBinding(
-			key.WithKeys("enter"),
-			key.WithHelp("enter", "choose"),
-		),
+		// choose: key.NewBinding(
+		// 	key.WithKeys("enter"),
+		// 	key.WithHelp("enter", "choose"),
+		// ),
 		remove: key.NewBinding(
 			key.WithKeys("x", "backspace"),
 			key.WithHelp("x", "delete"),
