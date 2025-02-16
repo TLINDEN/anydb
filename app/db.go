@@ -27,6 +27,8 @@ import (
 	"strings"
 	"time"
 
+	common "github.com/tlinden/anydb/common"
+
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -93,7 +95,14 @@ func (db *DB) Open() error {
 		}
 	}
 
-	b, err := bolt.Open(db.Dbfile, 0600, nil)
+	var opts *bolt.Options
+
+	if db.Debug {
+		log := common.Slogger{Logger: slog.Default()}
+		opts = &bolt.Options{Logger: log}
+	}
+
+	b, err := bolt.Open(db.Dbfile, 0600, opts)
 	if err != nil {
 		return fmt.Errorf("failed to open DB %s: %w", db.Dbfile, err)
 	}
