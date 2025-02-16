@@ -20,13 +20,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	common "github.com/tlinden/anydb/common"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
+
+	common "github.com/tlinden/anydb/common"
 
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
@@ -97,7 +98,7 @@ func (db *DB) Open() error {
 	var opts *bolt.Options
 
 	if db.Debug {
-		log := common.Slogger{slog.Default()}
+		log := common.Slogger{Logger: slog.Default()}
 		opts = &bolt.Options{Logger: log}
 	}
 
