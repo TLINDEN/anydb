@@ -6,6 +6,9 @@ header="TITLE DATE TAGS PREVIEW"
 # its possible to use another version of anydb for testing purposes
 anydb="${ANYDB:-anydb}"
 
+# it's also possible to tune the refresh time
+refresh="${REFRESH:-2}"
+
 # list command
 command="( echo '$header'; $anydb ls -m template --template '$template' ) | column -t -l4"
 
@@ -39,7 +42,7 @@ _updater() {
     touch $_current $_cache
 
     while :; do
-        sleep 10
+        sleep "$refresh"
 
         _list > $_current
 
@@ -66,7 +69,8 @@ _updater $port &
 pid=$!
 
 db=$($anydb info | grep Database | cut -d: -f2)
-shorthelp="$db - [enter]read  [c-e]edit  [c-k]kill  [c-c]exit  [c-k]delete"
+shorthelp="$db - [enter]read  [c-e]edit  [c-k]kill  [c-c]exit  [c-n]new  [c-k]delete"
+create="clear; (read -p 'Key: ' key; read -p 'Value: ' value; anydb set \"\$key\" \"\$value\")"
 
 if test -n "$GUM"; then
     color="Color \"#ff\" \"#0000ff\"" # white on blue
@@ -74,8 +78,12 @@ if test -n "$GUM"; then
     enter="{{ $color \"[Enter]\"}} Read"
     edit="{{ $color \"[ctrl-c]\"}} Edit"
     delete="{{ $color \"[ctrl-k]\"}} Delete"
-    template="$db $enter $edit $delete"
+    exit="{{ $color \"[ctrl-c]\"}} Exit"
+    new="{{ $color \"[ctrl-n]\"}} New"
+    template="$db $enter $edit $delete $new $exit"
     shorthelp=$(echo "$template" | gum format -t template)
+
+    create="clear; key=\$(gum write --prompt 'Key: ' --max-lines=1); value=\$(gum write --prompt 'Key: ' --max-lines=1); anydb set \"\$key\" \"\$value\""
 fi
 
 trap '_cleanup; (exit $?); exit' INT TERM EXIT
@@ -90,6 +98,7 @@ trap '_cleanup; (exit $?); exit' INT TERM EXIT
             --height 100% --header-first --cycle --header-lines=1 --listen=$port \
             --bind "enter:execute: clear; $anydb get {1} | less" \
             --bind "ctrl-e:execute: $anydb edit {1}" \
+            --bind "ctrl-n:execute:$create > /dev/tty" \
             --bind "ctrl-k:execute:$anydb del {1}"
             
 
