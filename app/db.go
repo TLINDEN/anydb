@@ -60,6 +60,10 @@ type DbTag struct {
 	Keys []string `json:"key"`
 }
 
+func (entry *DbEntry) Taglist() string {
+	return strings.Join(entry.Tags, ",")
+}
+
 const BucketData string = "data"
 
 func GetDbFile(file string) string {
