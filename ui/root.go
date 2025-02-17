@@ -17,6 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package ui
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -27,7 +30,7 @@ import (
 )
 
 var (
-	appStyle = lipgloss.NewStyle().Padding(1, 2)
+	appStyle = lipgloss.NewStyle().Padding(1, 2).Border(lipgloss.RoundedBorder())
 
 	titleStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFDF5")).
@@ -60,8 +63,10 @@ func (loader *Loader) Update() error {
 
 	for _, entry := range entries {
 		loader.items = append(loader.items, item{
-			title:       entry.Key,
-			description: entry.Preview,
+			title: entry.Key,
+			description: fmt.Sprintf(" [Modified: %s - tags: %s]",
+				entry.Created.AsTime(), strings.Join(entry.Tags, ",")),
+			value: entry.Value,
 		})
 	}
 
@@ -101,12 +106,14 @@ type listKeyMap struct {
 type item struct {
 	title       string
 	description string
+	value       string
 }
 
 type ChoiceMsg string
 
 func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.description }
+func (i item) Value() string       { return i.value }
 func (i item) FilterValue() string { return i.title }
 
 func newListKeyMap() *listKeyMap {
@@ -183,6 +190,7 @@ func NewModel(config *cfg.Config, entries app.DbEntries) model {
 		viewport:     viewport.New(20, 40),
 		keys:         listKeys,
 		delegateKeys: delegateKeys,
+		conf:         config,
 	}
 }
 

@@ -22,6 +22,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tlinden/anydb/app"
 )
 
 func (m model) UpdateList(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -70,8 +71,11 @@ func (m model) UpdateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.viewItem):
 			m.mode = ModeView
-			// FIXME: fetch value from DB and set it as content, also add the key as title
-			m.viewport.SetContent(m.selected)
+			entry, err := m.conf.DB.Get(&app.DbAttr{Key: m.selected})
+			if err != nil {
+				m.viewport.SetContent(err.Error())
+			}
+			m.viewport.SetContent(entry.Value)
 
 		case key.Matches(msg, m.keys.insertItem):
 			panic(1)

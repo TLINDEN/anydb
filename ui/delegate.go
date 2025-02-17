@@ -28,9 +28,6 @@ func newItemDelegate(keys *delegateKeyMap, config *cfg.Config) list.DefaultDeleg
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
-			// case key.Matches(msg, keys.choose):
-			// 	return m.NewStatusMessage(statusMessageStyle("You chose " + title))
-
 			case key.Matches(msg, keys.remove):
 				if err := config.DB.Del(&app.DbAttr{Key: title}); err != nil {
 					log.Fatal(err)
@@ -56,6 +53,8 @@ func newItemDelegate(keys *delegateKeyMap, config *cfg.Config) list.DefaultDeleg
 	d.FullHelpFunc = func() [][]key.Binding {
 		return [][]key.Binding{help}
 	}
+
+	d.SetSpacing(0)
 
 	return d
 }
