@@ -377,8 +377,14 @@ func (db *DB) Del(attr *DbAttr) error {
 	defer db.Close()
 
 	err := db.DB.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(db.Bucket))
+		// root bucket
+		root := tx.Bucket([]byte(db.Bucket))
+		if root == nil {
+			return nil
+		}
 
+		// get data sub bucket
+		bucket := root.Bucket([]byte("meta"))
 		if bucket == nil {
 			return nil
 		}
