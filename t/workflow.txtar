@@ -78,4 +78,4 @@ exec anydb -f test.db del foo
 
 # check deleted
 exec anydb -f test.db list
-! stdout bar
+! stdout blah
