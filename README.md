@@ -8,10 +8,17 @@
 [![Documentation](https://img.shields.io/badge/manpage-documentation-blue)](https://github.com/TLINDEN/anydb/blob/master/anydb.pod)
 
 > [!CAUTION]
-> Version 0.1.3 introduced a [regression bug](https://github.com/TLINDEN/anydb/issues/19),
+> Between version 0.1.0 and version 0.2.1 deletion of keys did not work. There
+> is a unit test to check for this, but this unit test had a bug as well and
+> didn't catch it. The bug and the test have been fixed. You are advised to
+> upgrade to 0.2.1 and above.
+
+> [!CAUTION]
+> Version 0.1.3 introduced a [regression](https://github.com/TLINDEN/anydb/issues/19),
 > which caused the encryption feature not to work correctly anymore.
 > If you are using anydb 0.1.3, you are urgently advised to
 > upgrade to 0.2.0
+
 
 Anydb is a simple to use commandline tool to store anything you'd
 like, even binary files etc. It is a re-implementation of
