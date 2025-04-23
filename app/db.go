@@ -235,48 +235,29 @@ func (db *DB) Set(attr *DbAttr) error {
 	// check if the  entry already exists and if yes,  check if it has
 	// any  tags. if so,  we initialize  our update struct  with these
 	// tags unless it has new tags configured.
-	// FIXME: use Get()
-	err := db.DB.View(func(tx *bolt.Tx) error {
-		root := tx.Bucket([]byte(db.Bucket))
-		if root == nil {
-			return nil
+	slog.Debug("+++ GET")
+	oldentry, err := db.txGet(attr)
+	if err != nil {
+		if !strings.Contains(err.Error(), "no such key") {
+			return err
 		}
-
-		bucket := root.Bucket([]byte("meta"))
-		if bucket == nil {
-			return nil
-		}
-
-		slog.Debug("opened buckets", "root", root, "data", bucket)
-
-		pbentry := bucket.Get([]byte(entry.Key))
-		if pbentry == nil {
-			return nil
-		}
-
-		var oldentry DbEntry
-		if err := proto.Unmarshal(pbentry, &oldentry); err != nil {
-			return fmt.Errorf("failed to unmarshal from protobuf: %w", err)
-		}
-
+	}
+	
+	if oldentry != nil {
 		if len(oldentry.Tags) > 0 && len(entry.Tags) == 0 {
 			// initialize update entry with tags from old entry
 			entry.Tags = oldentry.Tags
 		}
-
-		return nil
-	})
-
-	if err != nil {
-		return err
 	}
-
+	
+	slog.Debug("+++ MARSHAL")
 	// marshall our data
 	pbentry, err := proto.Marshal(&entry)
 	if err != nil {
 		return fmt.Errorf("failed to marshall protobuf: %w", err)
 	}
 
+	slog.Debug("+++ UPDATE")
 	err = db.DB.Update(func(tx *bolt.Tx) error {
 		// create root bucket
 		root, err := tx.CreateBucketIfNotExists([]byte(db.Bucket))
@@ -320,12 +301,10 @@ func (db *DB) Set(attr *DbAttr) error {
 	return nil
 }
 
-func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
-	if err := db.Open(); err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
+// internal DB getter, assumes db.DB has already been
+// opened successfully. Do NOT call this w/o valid
+// DB handle!
+func (db *DB)txGet(attr *DbAttr) (*DbEntry, error) {
 	entry := DbEntry{}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
@@ -377,10 +356,25 @@ func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to read from DB: %w", err)
+		return nil, err
 	}
 
 	return &entry, nil
+}
+
+func (db *DB) Get(attr *DbAttr) (*DbEntry, error) {
+	if err := db.Open(); err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	entry, err := db.txGet(attr)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from DB: %w", err)
+	}
+
+	return entry, nil
 }
 
 func (db *DB) Del(attr *DbAttr) error {
