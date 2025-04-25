@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package main
 
 import (
-	"os"
 	"testing"
 
 	"github.com/rogpeppe/go-internal/testscript"
 )
 
 func TestMain(m *testing.M) {
-	os.Exit(testscript.RunMain(m, map[string]func() int{
-		"anydb": Main,
-	}))
+	testscript.Main(m, map[string]func(){
+		"anydb": main,
+	})
 }
 
 func TestAnydb(t *testing.T) {
