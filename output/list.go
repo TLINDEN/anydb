@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 Thomas von Dein
+Copyright © 2025 Thomas von Dein
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,12 +22,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 	tpl "text/template"
 
 	"github.com/dustin/go-humanize"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
 )
@@ -80,13 +83,44 @@ func ListTemplate(writer io.Writer, conf *cfg.Config, entries app.DbEntries) err
 
 func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {
 	tableString := &strings.Builder{}
-	table := tablewriter.NewWriter(tableString)
+
+	table := tablewriter.NewTable(tableString,
+		tablewriter.WithRenderer(
+			renderer.NewBlueprint(tw.Rendition{
+				Borders: tw.BorderNone,
+				Symbols: tw.NewSymbols(tw.StyleNone),
+				Settings: tw.Settings{
+					Separators: tw.Separators{BetweenRows: tw.Off, BetweenColumns: tw.On},
+					Lines:      tw.Lines{ShowFooterLine: tw.Off, ShowHeaderLine: tw.Off},
+				},
+			})),
+		tablewriter.WithConfig(tablewriter.Config{
+			Header: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					AutoFormat: tw.Off,
+				},
+				Padding: tw.CellPadding{
+					Global: tw.Padding{Left: "", Right: ""},
+				},
+			},
+			Row: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					AutoWrap:  tw.WrapNone,
+					Alignment: tw.AlignLeft,
+				},
+				Padding: tw.CellPadding{
+					Global: tw.Padding{Left: "", Right: ""},
+				},
+			},
+		}),
+		tablewriter.WithPadding(tw.PaddingDefault),
+	)
 
 	if !conf.NoHeaders {
 		if conf.Mode == "wide" {
-			table.SetHeader([]string{"KEY", "TAGS", "SIZE", "UPDATED", "VALUE"})
+			table.Header([]string{"KEY", "TAGS", "SIZE", "UPDATED", "VALUE"})
 		} else {
-			table.SetHeader([]string{"KEY", "VALUE"})
+			table.Header([]string{"KEY", "VALUE"})
 		}
 	}
 
@@ -116,22 +150,11 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 		}
 	}
 
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(false)
-	table.SetAutoFormatHeaders(true)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetRowSeparator("")
-	table.SetHeaderLine(false)
-	table.SetBorder(false)
-	table.SetNoWhiteSpace(true)
-
-	table.SetTablePadding("\t") // pad with tabs
-
 	table.Render()
 
-	fmt.Fprint(writer, tableString.String())
+	trimmer := regexp.MustCompile(`(?m)^\s*`)
+
+	fmt.Fprint(writer, trimmer.ReplaceAllString(tableString.String(), ""))
 
 	return nil
 }

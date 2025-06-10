@@ -22,13 +22,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
         with:
           push: true
           tags: ghcr.io/tlinden/anydb:${{ github.ref_name}}
 
       - name: Build and push latest Docker image
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
         with:
           push: true
           tags: ghcr.io/tlinden/anydb:latest
