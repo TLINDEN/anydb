@@ -138,7 +138,7 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 						row.Created.AsTime().Format("02.01.2006T03:04.05"),
 						row.Preview,
 					}); err != nil {
-					return err
+					return fmt.Errorf("failed to add data to table: %w", err)
 				}
 			default:
 				if err := table.Append([]string{
@@ -148,20 +148,26 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 					humanize.Time(row.Created.AsTime()),
 					row.Preview,
 				}); err != nil {
-					return err
+					return fmt.Errorf("failed to add data to table: %w", err)
 				}
 			}
 
 		} else {
-			table.Append([]string{row.Key, row.Preview})
+			if err := table.Append([]string{row.Key, row.Preview}); err != nil {
+				return fmt.Errorf("failed to add data to table: %w", err)
+			}
 		}
 	}
 
-	table.Render()
+	if err := table.Render(); err != nil {
+		return fmt.Errorf("failed to render table: %w", err)
+	}
 
 	trimmer := regexp.MustCompile(`(?m)^\s*`)
 
-	fmt.Fprint(writer, trimmer.ReplaceAllString(tableString.String(), ""))
+	if _, err := fmt.Fprint(writer, trimmer.ReplaceAllString(tableString.String(), "")); err != nil {
+		return fmt.Errorf("failed to write output: %w", err)
+	}
 
 	return nil
 }

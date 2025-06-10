@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"reflect"
 
@@ -43,7 +44,9 @@ func Print(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.DbEn
 			if isatty {
 				fmt.Println("binary data omitted")
 			} else {
-				os.Stdout.WriteString(entry.Value)
+				if _, err := os.Stdout.WriteString(entry.Value); err != nil {
+					return err
+				}
 			}
 		} else {
 			fmt.Print(string(entry.Value))
@@ -79,7 +82,11 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 		if err != nil {
 			return fmt.Errorf("failed to open file %s for writing: %w", attr.File, err)
 		}
-		defer fd.Close()
+		defer func() {
+			if err := fd.Close(); err != nil {
+				log.Fatal(err)
+			}
+		}()
 
 		fileHandle = fd
 	}
@@ -102,34 +109,45 @@ func WriteFile(writer io.Writer, conf *cfg.Config, attr *app.DbAttr, entry *app.
 }
 
 func Info(writer io.Writer, conf *cfg.Config, info *app.DbInfo) error {
-	fmt.Fprintf(writer, "Database: %s\n", info.Path)
+	if _, err := fmt.Fprintf(writer, "Database: %s\n", info.Path); err != nil {
+		return fmt.Errorf("failed to write output: %w", err)
+	}
 
 	for _, bucket := range info.Buckets {
 		if conf.NoHumanize {
-			fmt.Fprintf(
+			if _, err := fmt.Fprintf(
 				writer,
 				"%19s: %s\n%19s: %d\n%19s: %d\n%19s: %t\n",
 				"Bucket", bucket.Name,
 				"Size", bucket.Size,
 				"Keys", bucket.Keys,
-				"Encrypted", conf.Encrypt)
+				"Encrypted", conf.Encrypt); err != nil {
+				return fmt.Errorf("failed to write output: %w", err)
+			}
 		} else {
-			fmt.Fprintf(
+			if _, err := fmt.Fprintf(
 				writer,
 				"%19s: %s\n%19s: %s\n%19s: %d\n",
 				"Bucket", bucket.Name,
 				"Size", humanize.Bytes(uint64(bucket.Size)),
-				"Keys", bucket.Keys)
+				"Keys", bucket.Keys); err != nil {
+				return fmt.Errorf("failed to write output: %w", err)
+			}
 		}
 
 		if conf.Debug {
 			val := reflect.ValueOf(&bucket.Stats).Elem()
 			for i := 0; i < val.NumField(); i++ {
-				fmt.Fprintf(writer, "%19s: %v\n", val.Type().Field(i).Name, val.Field(i))
+				if _, err := fmt.Fprintf(writer, "%19s: %v\n", val.Type().Field(i).Name, val.Field(i)); err != nil {
+					return fmt.Errorf("failed to write output: %w", err)
+				}
 			}
 		}
 
-		fmt.Fprintln(writer)
+		if _, err := fmt.Fprintln(writer); err != nil {
+			return fmt.Errorf("failed to write output: %w", err)
+		}
 	}
+
 	return nil
 }
