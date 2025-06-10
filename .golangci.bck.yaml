@@ -1,0 +1,6 @@
+linters:
+  exclusions:
+    rules:
+      - linters:
+          - staticcheck
+        text: "QF1008:"
