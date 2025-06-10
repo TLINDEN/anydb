@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 Thomas von Dein
+Copyright © 2025 Thomas von Dein
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import (
 	"github.com/tlinden/anydb/common"
 )
 
-var Version string = "v0.2.2"
+var Version string = "v0.2.3"
 
 type BucketConfig struct {
 	Encrypt bool

@@ -156,7 +156,7 @@ func Del(conf *cfg.Config) *cobra.Command {
 		Long:  `Delete key and value matching key`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return errors.New("No key specified")
+				return errors.New("no key specified")
 			}
 
 			// errors at this stage do not cause the usage to be shown

@@ -20,8 +20,7 @@ import "os"
 
 func CleanError(file string, err error) error {
 	// remove given [backup] file and forward the given error
-	os.Remove(file)
-	return err
+	return os.Remove(file)
 }
 
 func FileExists(filename string) bool {

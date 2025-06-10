@@ -104,11 +104,7 @@ Wrapper to respond with proper json status, message and code,
 shall be prepared and called by the handlers directly.
 */
 func JsonStatus(c *fiber.Ctx, code int, msg string) error {
-	success := true
-
-	if code != fiber.StatusOK {
-		success = false
-	}
+	success := code == fiber.StatusOK
 
 	return c.Status(code).JSON(Result{
 		Code:    code,

@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 Thomas von Dein
+Copyright © 2025 Thomas von Dein
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/tlinden/anydb/app"
 	"github.com/tlinden/anydb/cfg"
 )
@@ -71,7 +73,9 @@ func ListTemplate(writer io.Writer, conf *cfg.Config, entries app.DbEntries) err
 		}
 
 		if buf.Len() > 0 {
-			fmt.Fprintln(writer, buf.String())
+			if _, err := fmt.Fprintln(writer, buf.String()); err != nil {
+				return fmt.Errorf("failed to write output: %w", err)
+			}
 		}
 	}
 
@@ -80,13 +84,46 @@ func ListTemplate(writer io.Writer, conf *cfg.Config, entries app.DbEntries) err
 
 func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {
 	tableString := &strings.Builder{}
-	table := tablewriter.NewWriter(tableString)
+
+	styleTSV := tw.NewSymbolCustom("space").WithColumn("\t")
+
+	table := tablewriter.NewTable(tableString,
+		tablewriter.WithRenderer(
+			renderer.NewBlueprint(tw.Rendition{
+				Borders: tw.BorderNone,
+				Symbols: styleTSV,
+				Settings: tw.Settings{
+					Separators: tw.Separators{BetweenRows: tw.Off, BetweenColumns: tw.On},
+					Lines:      tw.Lines{ShowFooterLine: tw.Off, ShowHeaderLine: tw.Off},
+				},
+			})),
+		tablewriter.WithConfig(tablewriter.Config{
+			Header: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					AutoFormat: tw.Off,
+				},
+				Padding: tw.CellPadding{
+					Global: tw.Padding{Left: "", Right: ""},
+				},
+			},
+			Row: tw.CellConfig{
+				Formatting: tw.CellFormatting{
+					AutoWrap:  tw.WrapNone,
+					Alignment: tw.AlignLeft,
+				},
+				Padding: tw.CellPadding{
+					Global: tw.Padding{Left: "", Right: ""},
+				},
+			},
+		}),
+		tablewriter.WithPadding(tw.PaddingNone),
+	)
 
 	if !conf.NoHeaders {
 		if conf.Mode == "wide" {
-			table.SetHeader([]string{"KEY", "TAGS", "SIZE", "UPDATED", "VALUE"})
+			table.Header([]string{"KEY", "TAGS", "SIZE", "UPDATED", "VALUE"})
 		} else {
-			table.SetHeader([]string{"KEY", "VALUE"})
+			table.Header([]string{"KEY", "VALUE"})
 		}
 	}
 
@@ -94,44 +131,42 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 		if conf.Mode == "wide" {
 			switch conf.NoHumanize {
 			case true:
-				table.Append([]string{
-					row.Key,
-					strings.Join(row.Tags, ","),
-					strconv.FormatUint(row.Size, 10),
-					row.Created.AsTime().Format("02.01.2006T03:04.05"),
-					row.Preview,
-				})
+				if err :=
+					table.Append([]string{
+						row.Key,
+						strings.Join(row.Tags, ","),
+						strconv.FormatUint(row.Size, 10),
+						row.Created.AsTime().Format("02.01.2006T03:04.05"),
+						row.Preview,
+					}); err != nil {
+					return fmt.Errorf("failed to add data to table: %w", err)
+				}
 			default:
-				table.Append([]string{
+				if err := table.Append([]string{
 					row.Key,
 					strings.Join(row.Tags, ","),
 					humanize.Bytes(uint64(row.Size)),
 					humanize.Time(row.Created.AsTime()),
 					row.Preview,
-				})
+				}); err != nil {
+					return fmt.Errorf("failed to add data to table: %w", err)
+				}
 			}
 
 		} else {
-			table.Append([]string{row.Key, row.Preview})
+			if err := table.Append([]string{row.Key, row.Preview}); err != nil {
+				return fmt.Errorf("failed to add data to table: %w", err)
+			}
 		}
 	}
 
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(false)
-	table.SetAutoFormatHeaders(true)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetRowSeparator("")
-	table.SetHeaderLine(false)
-	table.SetBorder(false)
-	table.SetNoWhiteSpace(true)
+	if err := table.Render(); err != nil {
+		return fmt.Errorf("failed to render table: %w", err)
+	}
 
-	table.SetTablePadding("\t") // pad with tabs
-
-	table.Render()
-
-	fmt.Fprint(writer, tableString.String())
+	if _, err := fmt.Fprint(writer, tableString.String()); err != nil {
+		return fmt.Errorf("failed to write output: %w", err)
+	}
 
 	return nil
 }
