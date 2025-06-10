@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 
@@ -285,7 +286,11 @@ func editContent(editor string, content string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create templ file: %w", err)
 	}
-	defer os.Remove(tmp.Name())
+	defer func() {
+		if err := os.Remove(tmp.Name()); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	// put the content into a tmp file
 	_, err = tmp.WriteString(content)
@@ -310,7 +315,11 @@ func editContent(editor string, content string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open temp file: %w", err)
 	}
-	defer modified.Close()
+	defer func() {
+		if err := modified.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	newcontent, err := io.ReadAll(modified)
 	if err != nil {

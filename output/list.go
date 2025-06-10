@@ -74,7 +74,9 @@ func ListTemplate(writer io.Writer, conf *cfg.Config, entries app.DbEntries) err
 		}
 
 		if buf.Len() > 0 {
-			fmt.Fprintln(writer, buf.String())
+			if _, err := fmt.Fprintln(writer, buf.String()); err != nil {
+				return fmt.Errorf("failed to write output: %w", err)
+			}
 		}
 	}
 
@@ -128,21 +130,26 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 		if conf.Mode == "wide" {
 			switch conf.NoHumanize {
 			case true:
-				table.Append([]string{
-					row.Key,
-					strings.Join(row.Tags, ","),
-					strconv.FormatUint(row.Size, 10),
-					row.Created.AsTime().Format("02.01.2006T03:04.05"),
-					row.Preview,
-				})
+				if err :=
+					table.Append([]string{
+						row.Key,
+						strings.Join(row.Tags, ","),
+						strconv.FormatUint(row.Size, 10),
+						row.Created.AsTime().Format("02.01.2006T03:04.05"),
+						row.Preview,
+					}); err != nil {
+					return err
+				}
 			default:
-				table.Append([]string{
+				if err := table.Append([]string{
 					row.Key,
 					strings.Join(row.Tags, ","),
 					humanize.Bytes(uint64(row.Size)),
 					humanize.Time(row.Created.AsTime()),
 					row.Preview,
-				})
+				}); err != nil {
+					return err
+				}
 			}
 
 		} else {

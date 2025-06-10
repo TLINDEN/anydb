@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -115,8 +116,10 @@ func (db *DB) Open() error {
 	return nil
 }
 
-func (db *DB) Close() error {
-	return db.DB.Close()
+func (db *DB) Close() {
+	if err := db.DB.Close(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (db *DB) List(attr *DbAttr, fulltext bool) (DbEntries, error) {
@@ -242,14 +245,14 @@ func (db *DB) Set(attr *DbAttr) error {
 			return err
 		}
 	}
-	
+
 	if oldentry != nil {
 		if len(oldentry.Tags) > 0 && len(entry.Tags) == 0 {
 			// initialize update entry with tags from old entry
 			entry.Tags = oldentry.Tags
 		}
 	}
-	
+
 	slog.Debug("+++ MARSHAL")
 	// marshall our data
 	pbentry, err := proto.Marshal(&entry)
@@ -304,7 +307,7 @@ func (db *DB) Set(attr *DbAttr) error {
 // internal DB getter, assumes db.DB has already been
 // opened successfully. Do NOT call this w/o valid
 // DB handle!
-func (db *DB)txGet(attr *DbAttr) (*DbEntry, error) {
+func (db *DB) txGet(attr *DbAttr) (*DbEntry, error) {
 	entry := DbEntry{}
 
 	err := db.DB.View(func(tx *bolt.Tx) error {
