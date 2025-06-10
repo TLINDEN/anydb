@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
 	"strconv"
 	"strings"
 	tpl "text/template"
@@ -86,11 +85,13 @@ func ListTemplate(writer io.Writer, conf *cfg.Config, entries app.DbEntries) err
 func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {
 	tableString := &strings.Builder{}
 
+	styleTSV := tw.NewSymbolCustom("space").WithColumn("\t")
+
 	table := tablewriter.NewTable(tableString,
 		tablewriter.WithRenderer(
 			renderer.NewBlueprint(tw.Rendition{
 				Borders: tw.BorderNone,
-				Symbols: tw.NewSymbols(tw.StyleNone),
+				Symbols: styleTSV,
 				Settings: tw.Settings{
 					Separators: tw.Separators{BetweenRows: tw.Off, BetweenColumns: tw.On},
 					Lines:      tw.Lines{ShowFooterLine: tw.Off, ShowHeaderLine: tw.Off},
@@ -115,7 +116,7 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 				},
 			},
 		}),
-		tablewriter.WithPadding(tw.PaddingDefault),
+		tablewriter.WithPadding(tw.PaddingNone),
 	)
 
 	if !conf.NoHeaders {
@@ -163,9 +164,7 @@ func ListTable(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error 
 		return fmt.Errorf("failed to render table: %w", err)
 	}
 
-	trimmer := regexp.MustCompile(`(?m)^\s*`)
-
-	if _, err := fmt.Fprint(writer, trimmer.ReplaceAllString(tableString.String(), "")); err != nil {
+	if _, err := fmt.Fprint(writer, tableString.String()); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
 
