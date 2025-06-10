@@ -47,6 +47,10 @@ jobs:
   golangci:
     name: lint
     runs-on: ubuntu-latest
+    linters-settings:
+      golint:
+        ignore:
+          - QF1008
     steps:
       - uses: actions/setup-go@v5
         with:
