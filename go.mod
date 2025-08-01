@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/dustin/go-humanize v1.0.1
-	github.com/gofiber/fiber/v2 v2.52.8
+	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/inconshreveable/mousetrap v1.1.0
 	github.com/olekukonko/tablewriter v1.0.7
 	github.com/pelletier/go-toml v1.9.5
