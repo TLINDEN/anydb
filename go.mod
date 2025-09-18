@@ -13,7 +13,7 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/spf13/cobra v1.9.1
 	github.com/tlinden/yadu v0.1.3
-	go.etcd.io/bbolt v1.4.1
+	go.etcd.io/bbolt v1.4.3
 	golang.org/x/crypto v0.41.0
 	golang.org/x/term v0.34.0
 	google.golang.org/protobuf v1.36.6
