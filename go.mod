@@ -1,6 +1,6 @@
 module github.com/tlinden/anydb
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.1
 
@@ -15,7 +15,7 @@ require (
 	github.com/tlinden/yadu v0.1.3
 	go.etcd.io/bbolt v1.4.3
 	golang.org/x/crypto v0.41.0
-	golang.org/x/term v0.34.0
+	golang.org/x/term v0.35.0
 	google.golang.org/protobuf v1.36.6
 )
 
@@ -34,7 +34,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.55.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
