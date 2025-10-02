@@ -16,7 +16,7 @@ require (
 	go.etcd.io/bbolt v1.4.3
 	golang.org/x/crypto v0.41.0
 	golang.org/x/term v0.35.0
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/protobuf v1.36.9
 )
 
 require (
