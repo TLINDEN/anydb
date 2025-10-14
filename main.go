@@ -41,7 +41,7 @@ func init() {
 	// thus give the user time to read it.
 	if runtime.GOOS == "windows" {
 		if mousetrap.StartedByExplorer() {
-			fmt.Println("Do no double click kleingebaeck.exe!")
+			fmt.Println("Do no double click anydb.exe!")
 			fmt.Println("Please open a command shell and run it from there.")
 			fmt.Println()
 			fmt.Print("Press any key to quit: ")
