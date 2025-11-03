@@ -177,6 +177,6 @@ Enter
 Sleep 3s
 
 Enter
-Type "# Try it out yourself: github.com/tlinden/anydb!"
+Type "# Try it out yourself: codeberg.org/scip/anydb!"
 Enter
 Sleep 4s

@@ -26,10 +26,10 @@ import (
 	"os/exec"
 
 	"github.com/spf13/cobra"
-	"github.com/tlinden/anydb/app"
-	"github.com/tlinden/anydb/cfg"
-	"github.com/tlinden/anydb/output"
-	"github.com/tlinden/anydb/rest"
+	"codeberg.org/scip/anydb/app"
+	"codeberg.org/scip/anydb/cfg"
+	"codeberg.org/scip/anydb/output"
+	"codeberg.org/scip/anydb/rest"
 )
 
 func Export(conf *cfg.Config) *cobra.Command {

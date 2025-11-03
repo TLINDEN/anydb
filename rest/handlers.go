@@ -20,8 +20,8 @@ import (
 	//"github.com/alecthomas/repr"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/tlinden/anydb/app"
-	"github.com/tlinden/anydb/cfg"
+	"codeberg.org/scip/anydb/app"
+	"codeberg.org/scip/anydb/cfg"
 )
 
 type SetContext struct {

@@ -28,7 +28,7 @@ import (
 	"strings"
 	"time"
 
-	common "github.com/tlinden/anydb/common"
+	common "codeberg.org/scip/anydb/common"
 
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"

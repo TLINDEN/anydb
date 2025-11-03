@@ -51,11 +51,11 @@ endif
 
 app/dbentry.pb.go: app/dbentry.proto
 	protoc -I=. --go_out=app app/dbentry.proto
-	mv app/github.com/tlinden/anydb/app/dbentry.pb.go app/dbentry.pb.go
+	mv app/codeberg.org/scip/anydb/app/dbentry.pb.go app/dbentry.pb.go
 	rm -rf app/github.com
 
 buildlocal:
-	go build -ldflags "-X 'github.com/tlinden/anydb/cfg.VERSION=$(VERSION)'"
+	go build -ldflags "-X 'codeberg.org/scip/anydb/cfg.VERSION=$(VERSION)'"
 
 # binaries are being built by ci workflow on tag creation
 release:
@@ -75,7 +75,7 @@ test: clean
 
 singletest:
 	@echo "Call like this: ''make singletest TEST=TestPrepareColumns MOD=lib"
-	ANYDB_PASSWORD=test go test -run $(TEST) github.com/tlinden/anydb/$(MOD)
+	ANYDB_PASSWORD=test go test -run $(TEST) codeberg.org/scip/anydb/$(MOD)
 
 cover-report:
 	go test ./... -cover -coverprofile=coverage.out

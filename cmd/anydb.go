@@ -517,7 +517,7 @@ REST API
 BUGS
     In order to report a bug, unexpected behavior, feature requests or to
     submit a patch, please open an issue on github:
-    <https://github.com/TLINDEN/anydb/issues>.
+    <https://codeberg.org/scip/anydb/issues>.
 
     Please repeat the failing command with debugging enabled "-d" and
     include the output in the issue.

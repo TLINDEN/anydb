@@ -1,11 +1,10 @@
 ## A personal key value store
 
-[![Actions](https://github.com/tlinden/anydb/actions/workflows/ci.yaml/badge.svg)](https://github.com/tlinden/anydb/actions)
-[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/tlinden/anydb/blob/master/LICENSE)
-[![Go Coverage](https://github.com/tlinden/anydb/wiki/coverage.svg)](https://raw.githack.com/wiki/tlinden/anydb/coverage.html)
-[![Go Report Card](https://goreportcard.com/badge/github.com/tlinden/anydb)](https://goreportcard.com/report/github.com/tlinden/anydb)
-[![GitHub release](https://img.shields.io/github/v/release/tlinden/anydb?color=%2300a719)](https://github.com/TLINDEN/anydb/releases/latest)
-[![Documentation](https://img.shields.io/badge/manpage-documentation-blue)](https://github.com/TLINDEN/anydb/blob/master/anydb.pod)
+[![status-badge](https://ci.codeberg.org/api/badges/15517/status.svg)](https://ci.codeberg.org/repos/15517)
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://codeberg.org/scip/anydb/blob/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/codeberg.org/scip/anydb)](https://goreportcard.com/report/codeberg.org/scip/anydb)
+[![GitHub release](https://img.shields.io/github/v/release/tlinden/anydb?color=%2300a719)](https://codeberg.org/scip/anydb/releases)
+[![Documentation](https://img.shields.io/badge/manpage-documentation-blue)](https://codeberg.org/scip/anydb/raw/branch/main/anydb.pod)
 
 > [!CAUTION]
 > Between version 0.1.0 and version 0.2.1 deletion of keys did not work. There
@@ -14,7 +13,7 @@
 > upgrade to 0.2.1 and above.
 
 > [!CAUTION]
-> Version 0.1.3 introduced a [regression](https://github.com/TLINDEN/anydb/issues/19),
+> Version 0.1.3 introduced a [regression](https://codeberg.org/scip/anydb/issues/19),
 > which caused the encryption feature not to work correctly anymore.
 > If you are using anydb 0.1.3, you are urgently advised to
 > upgrade to 0.2.0
@@ -47,17 +46,17 @@ And I wrote a very similar [tool](https://www.daemon.de/projects/dbtool/) 24 yea
 
 **anydb** can do all the things you can do with skate:
 
-![simple demo](https://github.com/TLINDEN/anydb/blob/main/demo/intro.gif)
+![simple demo](https://codeberg.org/scip/anydb/raw/branch/demo/intro.gif)
 
 However, there are more features than just that!
 
-![advanced demo](https://github.com/TLINDEN/anydb/blob/main/demo/advanced.gif)
+![advanced demo](https://codeberg.org/scip/anydb/raw/branch/demo/advanced.gif)
 
 ## Installation
 
 There are multiple ways to install **anydb**:
 
-- Go to the [latest release page](https://github.com/tlinden/anydb/releases/latest),
+- Go to the [latest release page](https://codeberg.org/scip/anydb/releases),
   locate the binary for your operating system and platform.
   
   Download it and put it into some directory within your `$PATH` variable.
@@ -70,7 +69,7 @@ There are multiple ways to install **anydb**:
   
 - You can also install from source. Issue the following commands in your shell:
   ```shell
-  git clone https://github.com/TLINDEN/anydb.git
+  git clone https://codeberg.org/scip/anydb.git
   cd anydb
   make
   sudo make install
@@ -78,7 +77,7 @@ There are multiple ways to install **anydb**:
 
 - Or, if you have the GO toolkit installed, just install it like this:
   ```shell
-  go install github.com/tlinden/anydb@latest
+  go install codeberg.org/scip/anydb@latest
   ```
 
 If you  do not find a  binary release for your  platform, please don't
@@ -105,14 +104,14 @@ Here, we operate in a local  directory `mydb`, which we'll use as HOME
 inside  the  docker  container.  anydb  will  store  its  database  in
 `mydb/.config/anydb/default.db`.
 
-A list of available images is  [here](https://github.com/tlinden/anydb/pkgs/container/anydb/versions?filters%5Bversion_type%5D=tagged)
+A list of available images is  [here](https://codeberg.org/scip/anydb/pkgs/container/anydb/versions?filters%5Bversion_type%5D=tagged)
 
 
 ## Documentation
 
 The  documentation  is  provided  as  a unix  man-page.   It  will  be
 automatically installed if  you install from source.  However, you can
-[read the man-page online](https://github.com/TLINDEN/anydb/blob/master/anydb.pod)
+[read the man-page online](https://codeberg.org/scip/anydb/blob/master/anydb.pod)
 
 Or if you cloned  the repository you can read it  this way (perl needs
 to be installed though): `perldoc anydb.pod`.
@@ -129,7 +128,7 @@ best way for me to forget to do something.
 
 In order to report a bug,  unexpected behavior, feature requests or to
 submit    a    patch,    please    open   an    issue    on    github:
-https://github.com/TLINDEN/anydb/issues.
+https://codeberg.org/scip/anydb/issues.
 
 ## Copyright and license
 
@@ -141,7 +140,7 @@ T.v.Dein <tom AT vondein DOT org>
 
 ## Project homepage
 
-https://github.com/TLINDEN/anydb
+https://codeberg.org/scip/anydb
 
 ## Copyright and License
 

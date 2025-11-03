@@ -24,7 +24,7 @@ import (
 	"runtime"
 
 	"github.com/inconshreveable/mousetrap"
-	"github.com/tlinden/anydb/cmd"
+	"codeberg.org/scip/anydb/cmd"
 )
 
 func main() {

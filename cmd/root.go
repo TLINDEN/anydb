@@ -25,8 +25,8 @@ import (
 	"runtime/debug"
 
 	"github.com/spf13/cobra"
-	"github.com/tlinden/anydb/app"
-	"github.com/tlinden/anydb/cfg"
+	"codeberg.org/scip/anydb/app"
+	"codeberg.org/scip/anydb/cfg"
 	"github.com/tlinden/yadu"
 )
 

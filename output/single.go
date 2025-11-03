@@ -25,8 +25,8 @@ import (
 	"reflect"
 
 	"github.com/dustin/go-humanize"
-	"github.com/tlinden/anydb/app"
-	"github.com/tlinden/anydb/cfg"
+	"codeberg.org/scip/anydb/app"
+	"codeberg.org/scip/anydb/cfg"
 	"golang.org/x/term"
 	//"github.com/alecthomas/repr"
 )

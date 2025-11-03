@@ -5,7 +5,7 @@ package app;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/tlinden/anydb/app";
+option go_package = "codeberg.org/scip/anydb/app";
 
 message DbEntry {
   string Id = 1;

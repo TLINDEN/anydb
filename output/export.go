@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tlinden/anydb/app"
-	"github.com/tlinden/anydb/cfg"
+	"codeberg.org/scip/anydb/app"
+	"codeberg.org/scip/anydb/cfg"
 )
 
 func WriteJSON(attr *app.DbAttr, conf *cfg.Config, entries app.DbEntries) error {

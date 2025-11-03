@@ -21,7 +21,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/tlinden/anydb/cfg"
+	"codeberg.org/scip/anydb/cfg"
 )
 
 // used to return to the api client

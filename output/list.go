@@ -30,8 +30,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
-	"github.com/tlinden/anydb/app"
-	"github.com/tlinden/anydb/cfg"
+	"codeberg.org/scip/anydb/app"
+	"codeberg.org/scip/anydb/cfg"
 )
 
 func List(writer io.Writer, conf *cfg.Config, entries app.DbEntries) error {

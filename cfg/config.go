@@ -22,8 +22,8 @@ import (
 	"os"
 
 	"github.com/pelletier/go-toml"
-	"github.com/tlinden/anydb/app"
-	"github.com/tlinden/anydb/common"
+	"codeberg.org/scip/anydb/app"
+	"codeberg.org/scip/anydb/common"
 )
 
 var Version string = "v0.2.6"
