@@ -1,11 +1,13 @@
-## A personal key value store
+> [!IMPORTANT]
+> This software is now being maintained on [Codeberg](https://codeberg.org/scip/anydb/).
 
-[![Actions](https://github.com/tlinden/anydb/actions/workflows/ci.yaml/badge.svg)](https://github.com/tlinden/anydb/actions)
-[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/tlinden/anydb/blob/master/LICENSE)
-[![Go Coverage](https://github.com/tlinden/anydb/wiki/coverage.svg)](https://raw.githack.com/wiki/tlinden/anydb/coverage.html)
-[![Go Report Card](https://goreportcard.com/badge/github.com/tlinden/anydb)](https://goreportcard.com/report/github.com/tlinden/anydb)
-[![GitHub release](https://img.shields.io/github/v/release/tlinden/anydb?color=%2300a719)](https://github.com/TLINDEN/anydb/releases/latest)
+[![status-badge](https://ci.codeberg.org/api/badges/15517/status.svg)](https://ci.codeberg.org/repos/15517)
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://codeberg.org/scip/anydb/blob/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/codeberg.org/scip/anydb)](https://goreportcard.com/report/codeberg.org/scip/anydb)
+[![GitHub release](https://img.shields.io/github/v/release/tlinden/anydb?color=%2300a719)](https://codeberg.org/scip/anydb/releases)
 [![Documentation](https://img.shields.io/badge/manpage-documentation-blue)](https://github.com/TLINDEN/anydb/blob/master/anydb.pod)
+
+## A personal key value store
 
 > [!CAUTION]
 > Between version 0.1.0 and version 0.2.1 deletion of keys did not work. There
