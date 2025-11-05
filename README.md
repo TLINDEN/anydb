@@ -46,11 +46,11 @@ And I wrote a very similar [tool](https://www.daemon.de/projects/dbtool/) 24 yea
 
 **anydb** can do all the things you can do with skate:
 
-![simple demo](https://codeberg.org/scip/anydb/raw/branch/demo/intro.gif)
+![simple demo](https://codeberg.org/scip/anydb/raw/branch/main/demo/intro.gif)
 
 However, there are more features than just that!
 
-![advanced demo](https://codeberg.org/scip/anydb/raw/branch/demo/advanced.gif)
+![advanced demo](https://codeberg.org/scip/anydb/raw/branch/main/demo/advanced.gif)
 
 ## Installation
 
